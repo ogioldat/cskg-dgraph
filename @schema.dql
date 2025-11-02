@@ -1,0 +1,8 @@
+id: string @index(exact) .
+label: string .
+rel: [uid] .
+type Node {
+    id
+    label
+    rel
+}
