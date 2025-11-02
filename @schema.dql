@@ -1,6 +1,7 @@
 id: string @index(exact) .
 label: string .
-rel: [uid] .
+rel: [uid] (type: string, label: string) @reverse .
+
 type Node {
     id
     label
