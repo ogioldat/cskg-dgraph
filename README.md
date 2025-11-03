@@ -24,5 +24,5 @@ git push -uf origin main
 
 ## Setup
 
-- Build transform script `go build -o bin/tsv2json`
+- Build transform script `go build -o bin/tsv2json ./cmd/tsv2json`
 - TSV -> JSON `./bin/tsv2dg < data/cskg.tsv > data/cskg.json`
