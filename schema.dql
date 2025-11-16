@@ -1,0 +1,11 @@
+uri: string @index(exact) .
+label: string @index(fulltext) .
+source: string .
+sentence: string .
+
+type Concept {
+    uri
+    label
+    source
+    sentence
+}

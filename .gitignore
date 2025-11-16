@@ -1,2 +1,8 @@
 projects2025.pdf
+<<<<<<< HEAD
 *.tsv
+=======
+data
+bin
+tmp
+>>>>>>> d8f34a71aa7aa0d45cbe111fe132bc7b82d2581a
