@@ -36,3 +36,8 @@ There are 6001531 records.
 ## Questions
 
 - How to handle incomplete records? Skip or rebuild somehow?
+
+
+## Useful commands
+
+- `curl -X POST localhost:8080/alter -d '{"drop_all": true}'` Remove all data
