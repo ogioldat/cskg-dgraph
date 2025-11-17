@@ -3,90 +3,64 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"flag"
+	"crypto/sha256"
 	"fmt"
-	"math"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-const fileChunkSize = 10000
-
-var dirBatchSize int
-
-func init() {
-	flag.IntVar(&dirBatchSize, "batch", 300, "directory batch size")
-}
-
 func main() {
-	flag.Parse()
 	r := bufio.NewReaderSize(os.Stdin, 64*1024)
 
-	fileIndex := 1
 	var w *bufio.Writer
 	var f *os.File
 	var lineNum int
 	var objCount int
+	nodeCache := make(map[[32]byte]bool)
 
-	openFile := func() {
-		fileBatchNum := int(
-			math.Ceil(float64(fileIndex) / float64(dirBatchSize)),
-		)
-		name := fmt.Sprintf(
-			"data/out/%d/out_%05d.rdf",
-			fileBatchNum,
-			fileIndex,
-		)
+	name := "data/out/data.rdf"
 
-		// create parent directory
-		dir := filepath.Dir(name)
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			panic(err)
-		}
-
-		fh, err := os.Create(name)
-		if err != nil {
-			panic(err)
-		}
-		f = fh
-		w = bufio.NewWriterSize(f, 64*1024)
-		objCount = 0
+	dir := filepath.Dir(name)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		panic(err)
 	}
 
-	closeFile := func() {
-		if w == nil {
-			return
-		}
-		w.Flush()
-		f.Close()
-		w = nil
+	fh, err := os.Create(name)
+	if err != nil {
+		panic(err)
 	}
 
-	openFile()
+	f = fh
+	w = bufio.NewWriterSize(f, 64*1024)
+	objCount = 0
 
 	for {
 		lineNum++
 
-		if lineNum >= 15 {
-			break
-		}
-
 		line, err := r.ReadBytes('\n')
+
 		if len(line) <= 0 {
-			if err != nil {
+			if err == io.EOF {
 				break
 			}
 			continue
 		}
 
+		if err != nil && err != io.EOF {
+			fmt.Printf("read error at line %d: %v\n", lineNum, err)
+		}
+
 		if lineNum == 1 {
+			fmt.Println("Skip header")
 			continue // skip header
 		}
 
 		line = bytes.TrimRight(line, "\r\n")
 		fields := bytes.Split(line, []byte{'\t'})
 		if len(fields) < 10 {
+			fmt.Println("Wrong row")
 			continue
 		}
 
@@ -96,106 +70,118 @@ func main() {
 		node2 := fields[3]
 		node1Label := fields[4]
 		node2Label := fields[5]
-		relationLabel := string(fields[6])
+		relationLabel := fields[6]
 		source := fields[8]
 		sentence := fields[9]
 
-		writeObj := func(buf *bytes.Buffer, args ...interface{}) {
-			if objCount > 0 {
-				fmt.Fprintf(w, "\n")
-			}
-			// fmt.Fprintf(w, format, args...)
-			w.Write(buf.Bytes())
-			objCount++
-		}
+		node1Hash := sha256.Sum256(node1)
+		node2Hash := sha256.Sum256(node2)
 
 		buf := bytes.NewBufferString("")
 
-		fmt.Fprintf(buf, `<_:%s> <uri> "%s" .`, escapeStr(node1), escapeStr(node1))
+		_, hasNode1 := nodeCache[node1Hash]
+		if !hasNode1 {
+			fmt.Fprintf(buf, `<_:%s> <uri> "%s" .`, escapeStr(node1, true), escapeStr(node1, false))
 
-		fmt.Fprintf(buf, "\n")
-		fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node1), escapeStr(node1Label))
+			fmt.Fprintf(buf, "\n")
+			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node1, true), escapeStr(node1Label, false))
 
-		fmt.Fprintf(buf, "\n")
+			fmt.Fprintf(buf, "\n")
 
-		fmt.Fprintf(buf, `<_:%s> <uri> "%s" .`, escapeStr(node2), escapeStr(node2))
-
-		fmt.Fprintf(buf, "\n")
-		fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node2), escapeStr(node2Label))
-
-		fmt.Fprintf(buf, "\n")
-
-		rdfRelation := []byte(strings.Join(strings.Split(relationLabel, string(' ')), string('_')))
-
-		fmt.Fprintf(buf, `<_:%s> <%s> <_:%s> (edge_id="%s", relation="%s", source="%s", sentence="%s") .`,
-			escapeStr(node1),
-			escapeStr(rdfRelation),
-			escapeStr(node2),
-			escapeStr(edgeId),
-			escapeStr(relation),
-			escapeStr(source),
-			escapeStr(sentence),
-		)
-
-		fmt.Fprintf(buf, "\n")
-
-		// node1
-		writeObj(
-			buf,
-			// `<_:%s> <>  .`,
-			// `{"uid":"_:%s","dgraph.type":"Concept","uri":"%s","label":"%s"}`,
-			// escapeStr(node1),
-			//  escapeStr(node1),
-			//  escapeStr(node1Label),
-
-		)
-
-		// // node2
-		// writeObj(
-		// 	`{"uid":"_:%s","dgraph.type":"Concept","uri":"%s","label":"%s"}`,
-		// 	escapeStr(node2),
-		//  escapeStr(node2),
-		//  escapeStr(node2Label),
-
-		// )
-
-		// // relation
-		// writeObj(
-		// 	`{"uid":"_:%s","rel":[{"uid":"_:%s","rel|edge_id":"%s","rel|relation":"%s","rel|relation_label":"%s","rel|source":"%s","rel|sentence":"%s"}]}`,
-		// 	escapeStr(node1),
-
-		// 	escapeStr(node2),
-
-		// 	escapeStr(id),
-
-		// 	escapeStr(relation),
-
-		// 	escapeStr(relationLabel),
-
-		// 	escapeStr(source),
-
-		// 	escapeStr(sentence),
-
-		// )
-
-		if objCount >= fileChunkSize {
-			closeFile()
-			fileIndex++
-			openFile()
+			nodeCache[node1Hash] = true
 		}
+
+		_, hasNode2 := nodeCache[node2Hash]
+		if !hasNode2 {
+			fmt.Fprintf(buf, `<_:%s> <uri> "%s" .`, escapeStr(node2, true), escapeStr(node2, false))
+
+			fmt.Fprintf(buf, "\n")
+			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node2, true), escapeStr(node2Label, false))
+
+			fmt.Fprintf(buf, "\n")
+
+			nodeCache[node2Hash] = true
+		}
+
+		if len(relationLabel) < 1 {
+			continue
+		}
+
+		rdfRelation := []byte(
+			strings.ReplaceAll(
+				strings.ReplaceAll(string(relationLabel), " ", "_"),
+				"|",
+				"_",
+			),
+		)
+
+		fmt.Fprintf(buf, `<_:%s> <%s> <_:%s> (edge_id="%s", relation="%s", label="%s", source="%s", sentence="%s") .`,
+			escapeStr(node1, true),
+			escapeStr(rdfRelation, true),
+			escapeStr(node2, true),
+			escapeStr(edgeId, false),
+			escapeStr(relation, false),
+			escapeStr(relationLabel, false),
+			escapeStr(source, false),
+			escapeStr(sentence, false),
+		)
+
+		if objCount > 0 {
+			if _, err := fmt.Fprintf(w, "\n"); err != nil {
+				fmt.Fprintf(os.Stderr, "write newline error at line %d: %v\n", lineNum, err)
+			}
+		}
+
+		if _, err := w.Write(buf.Bytes()); err != nil {
+			fmt.Fprintf(os.Stderr, "write buffer error at line %d: %v\n", lineNum, err)
+		}
+		objCount++
 	}
 
-	closeFile()
+	if w == nil {
+		return
+	}
+	if err := w.Flush(); err != nil {
+		fmt.Fprintf(os.Stderr, "flush error: %v\n", err)
+	}
+	if err := f.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "file close error: %v\n", err)
+	}
+	w = nil
+
+	fmt.Println("Completed successfully, lines", lineNum)
+
+	if lineNum != 6001533 {
+		fmt.Println("Expected lines", 6001533)
+	}
 }
 
-func escapeStr(b []byte) string {
+func escapeStr(b []byte, predicate bool) string {
 	out := make([]byte, 0, len(b))
 	for _, c := range b {
 		switch c {
 		case '\\':
-			out = append(out, '\\', '\\')
+			if predicate {
+				out = append(out, '%', '5', 'C')
+			} else {
+				out = append(out, '\\', '\\')
+			}
 		case '"':
-			out = append(out, '\\', '"')
+			if predicate {
+				continue
+			} else {
+				out = append(out, '\\', '"')
+			}
+		case '`':
+			out = append(out, '\'')
+		case '>':
+			if predicate {
+				out = append(out, '%', '3', 'E')
+			}
+		case '<':
+			if predicate {
+				out = append(out, '%', '3', 'C')
+			}
 		default:
 			out = append(out, c)
 		}
