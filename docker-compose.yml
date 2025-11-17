@@ -1,19 +1,46 @@
 version: '3.8'
 
 services:
-  dgraph:
-    image: dgraph/standalone:latest
-    volumes:
-      - ./data:/data
-      - ./@schema.dql:/@schema.dql
-      - ./tmp:/dgraph
+  zero:
+    image: dgraph/dgraph:latest
+    container_name: dgraph-zero
     ports:
-      - "8080:8080"
-      - "9080:9080"
-    stdin_open: true
-    tty: true
+      - "5080:5080"
+      - "6080:6080"
+    volumes:
+      - type: volume
+        source: dgraph
+        target: /dgraph
+        volume:
+          nocopy: true
+    restart: unless-stopped
+    command: dgraph zero --bindall=true --my=zero:5080
+
+  alpha:
+    image: dgraph/dgraph:latest
+    container_name: dgraph-alpha
+    ports:
+      - 8080:8080
+      - 7080:7080
+      - 9080:9080
+    volumes:
+      - type: volume
+        source: dgraph
+        target: /dgraph
+        volume:
+          nocopy: true
+      - ./@schema.dql:/@schema.dql
+      - ./data:/data
+      - ./bulk-load.sh:/bulk-load.sh
+    depends_on:
+      - zero
+    command: 'bash /bulk-load.sh'
 
   ratel:
     image: dgraph/ratel:latest
     ports:
       - "8000:8000"
+
+volumes:
+  dgraph:
+   driver: local
