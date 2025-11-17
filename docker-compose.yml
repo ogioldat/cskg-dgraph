@@ -5,9 +5,8 @@ services:
     image: dgraph/standalone:latest
     volumes:
       - ./data:/data
-      - ./@schema.gql:/@schema.gql
+      - ./@schema.dql:/@schema.dql
       - ./tmp:/dgraph
-    # command: dgraph bulk -f /data/cskg.json -s /schema.dql
     ports:
       - "8080:8080"
       - "9080:9080"
