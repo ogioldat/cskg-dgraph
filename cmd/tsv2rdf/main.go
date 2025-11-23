@@ -19,6 +19,7 @@ func main() {
 	var lineNum int
 	var objCount int
 	nodeCache := make(map[[32]byte]bool)
+	relationCache := make(map[string]bool)
 
 	name := "data/out/data.rdf"
 
@@ -53,7 +54,6 @@ func main() {
 		}
 
 		if lineNum == 1 {
-			fmt.Println("Skip header")
 			continue // skip header
 		}
 
@@ -85,6 +85,8 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node1, true), escapeStr(node1Label, false))
+			fmt.Fprintf(buf, "\n")
+			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node1, true), "Concept")
 
 			fmt.Fprintf(buf, "\n")
 
@@ -97,6 +99,8 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node2, true), escapeStr(node2Label, false))
+			fmt.Fprintf(buf, "\n")
+			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node2, true), "Concept")
 
 			fmt.Fprintf(buf, "\n")
 
@@ -107,13 +111,20 @@ func main() {
 			continue
 		}
 
+		// Original relation labels
 		rdfRelation := []byte(
-			strings.ReplaceAll(
-				strings.ReplaceAll(string(relationLabel), " ", "_"),
+			strings.ReplaceAll(strings.ReplaceAll(
+				strings.ReplaceAll(string(relationLabel),
+					" ", "_"),
 				"|",
 				"_",
 			),
+				"/r/", ""),
 		)
+		// Synthetic label
+		// rdfRelation := []byte("rel")
+
+		relationCache[string(rdfRelation)] = true
 
 		fmt.Fprintf(buf, `<_:%s> <%s> <_:%s> (edge_id="%s", relation="%s", label="%s", source="%s", sentence="%s") .`,
 			escapeStr(node1, true),
@@ -123,6 +134,7 @@ func main() {
 			escapeStr(relation, false),
 			escapeStr(relationLabel, false),
 			escapeStr(source, false),
+
 			escapeStr(sentence, false),
 		)
 
@@ -154,6 +166,28 @@ func main() {
 	if lineNum != 6001533 {
 		fmt.Println("Expected lines", 6001533)
 	}
+
+	schemaRelationsDefBuf := bytes.NewBufferString("")
+	schemaRelationsBuf := bytes.NewBufferString("")
+	for k := range relationCache {
+		fmt.Fprintf(schemaRelationsDefBuf, "%s: [uid] @reverse .\n", k)
+		fmt.Fprintf(schemaRelationsBuf, "\t%s\n", k)
+	}
+
+	schema := bytes.NewBufferString("")
+
+	fmt.Fprintf(schema, "uri: string @index(exact) .\n")
+	fmt.Fprintf(schema, "label: string @index(fulltext, term, exact) .\n")
+	fmt.Fprintf(schema, "%s\n", schemaRelationsDefBuf)
+
+	fmt.Fprintf(schema, `type Concept {
+    uri
+    label`)
+	fmt.Fprintf(schema, "\n%s", schemaRelationsBuf)
+	fmt.Fprintf(schema, "\n}\n")
+
+	os.WriteFile("data/schema.dql", schema.Bytes(), 0644)
+
 }
 
 func escapeStr(b []byte, predicate bool) string {
