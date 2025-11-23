@@ -64,7 +64,7 @@ def create_details_html(data_dict, title="Details"):
     """
 
 def generate_pyvis_html(dgraph_res):
-    """Converts Dgraph JSON to a PyVis HTML string with Click-to-Show Details."""
+    """Converts Dgraph JSON to a PyVis HTML string with Click-to-Show Details and Responsive Fullscreen."""
     G = nx.DiGraph()
     
     data = dgraph_res.get('q', [])
@@ -79,7 +79,6 @@ def generate_pyvis_html(dgraph_res):
         p_attrs = {k: v for k, v in parent.items() if k != 'rel'}
         p_details = create_details_html(p_attrs, title=f"Node: {p_label}")
         
-        # NOTE: We store the details in 'details_html' instead of 'title' to disable hover
         G.add_node(p_uid, label=p_label, details_html=p_details, color="#ff5733", size=30)
         
         relationships = parent.get('rel', [])
@@ -104,17 +103,17 @@ def generate_pyvis_html(dgraph_res):
                 p_uid, 
                 c_uid, 
                 label=edge_label_text,
-                details_html=e_details, # Custom attribute for our JS
+                details_html=e_details, 
                 color=visual_color,
                 font={'align': 'middle', 'size': 10}
             )
 
     # Configure PyVis
+    # Initial height is 600px, but CSS will override this in fullscreen
     net = Network(height="600px", width="100%", bgcolor="#222222", font_color="white")
     net.from_nx(G)
     net.force_atlas_2based(gravity=-50, central_gravity=0.01, spring_length=100, spring_strength=0.08, damping=0.4, overlap=0)
 
-    # Generate base HTML
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
             net.save_graph(tmp.name)
@@ -126,12 +125,12 @@ def generate_pyvis_html(dgraph_res):
         os.remove(path)
 
         # ---------------------------------------------------------
-        # INJECT CUSTOM CSS & JS FOR SIDEBAR PANEL
+        # INJECT CUSTOM CSS & JS 
         # ---------------------------------------------------------
         
-        # CSS for the 'Tab on the left'
         custom_css = """
         <style>
+            /* Info Panel Styling */
             #info-panel {
                 position: absolute;
                 top: 10px;
@@ -147,7 +146,7 @@ def generate_pyvis_html(dgraph_res):
                 font-size: 14px;
                 color: #333;
                 z-index: 1000;
-                display: none; /* Hidden by default */
+                display: none; 
                 transition: all 0.3s ease;
             }
             #close-panel {
@@ -160,23 +159,95 @@ def generate_pyvis_html(dgraph_res):
                 color: #888;
             }
             #close-panel:hover { color: #333; }
+            
+            /* Fullscreen Button Styling */
+            #fullscreen-btn {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.8);
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 8px 12px;
+                cursor: pointer;
+                font-family: sans-serif;
+                font-size: 14px;
+                font-weight: bold;
+                color: #444;
+                transition: background 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            #fullscreen-btn:hover {
+                background: #fff;
+                color: #000;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+
+            /* --- FULLSCREEN LAYOUT FIXES --- */
+            /* Force the network container to fill screen when in fullscreen mode */
+            :fullscreen #mynetwork {
+                width: 100vw !important;
+                height: 100vh !important;
+                background-color: #222222;
+            }
+            /* Webkit support */
+            :-webkit-full-screen #mynetwork {
+                width: 100vw !important;
+                height: 100vh !important;
+                background-color: #222222;
+            }
         </style>
+        
         <div id="info-panel">
             <div id="close-panel" onclick="document.getElementById('info-panel').style.display='none'">&times;</div>
             <div id="panel-content">Click a node or edge to see details here.</div>
         </div>
+        
+        <div id="fullscreen-btn" onclick="toggleFullScreen()">
+            <span>⛶</span> Fullscreen
+        </div>
         """
 
-        # JS to handle clicks
         custom_js = """
         <script type="text/javascript">
-            // Wait for network to be initialized
+            // 1. Fullscreen Logic
+            function toggleFullScreen() {
+                var elem = document.documentElement;
+                if (!document.fullscreenElement) {
+                    elem.requestFullscreen().catch(err => {
+                        alert(`Error enabling full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+            
+            // 2. Listen for fullscreen changes to resize the graph
+            document.addEventListener('fullscreenchange', (event) => {
+                // Give the browser a moment to render the new size
+                setTimeout(() => {
+                    // 'network' is the global variable created by PyVis
+                    network.fit({ 
+                        animation: {
+                            duration: 500,
+                            easingFunction: "easeInOutQuad"
+                        }
+                    });
+                }, 200);
+            });
+
+            // 3. Network Interaction Logic (Click handler)
             network.on("click", function (params) {
                 var panel = document.getElementById('info-panel');
                 var content = document.getElementById('panel-content');
                 var didSelect = false;
 
-                // 1. Check Nodes
                 if (params.nodes.length > 0) {
                     var nodeId = params.nodes[0];
                     var nodeData = nodes.get(nodeId);
@@ -187,7 +258,6 @@ def generate_pyvis_html(dgraph_res):
                     }
                 } 
                 
-                // 2. Check Edges (if no node selected)
                 if (!didSelect && params.edges.length > 0) {
                     var edgeId = params.edges[0];
                     var edgeData = edges.get(edgeId);
@@ -198,7 +268,6 @@ def generate_pyvis_html(dgraph_res):
                     }
                 }
 
-                // 3. If background clicked, hide panel
                 if (!didSelect) {
                     panel.style.display = 'none';
                 }
@@ -206,9 +275,7 @@ def generate_pyvis_html(dgraph_res):
         </script>
         """
         
-        # Insert CSS before body end
         html_string = html_string.replace("</body>", f"{custom_css}{custom_js}</body>")
-        
         return html_string
 
     except Exception as e:
@@ -231,7 +298,8 @@ def load_gql_files(directory="gql"):
         filename = os.path.basename(filepath)
         with open(filepath, "r") as f:
             queries[filename] = f.read()
-    return queries
+            
+    return dict(sorted(queries.items(), key=lambda kv: int(kv[0][0:2].replace('-',''))))
 
 # ---------------------------------------------------------
 # 3. SIDEBAR: CONTROLS
@@ -239,6 +307,7 @@ def load_gql_files(directory="gql"):
 st.sidebar.header("Query Configuration")
 
 query_map = load_gql_files("gql")
+print(query_map)
 selected_filename = st.sidebar.selectbox("Select Query File", list(query_map.keys()))
 target_uid = st.sidebar.text_input("Target UID ($id)", value="0x123")
 
@@ -271,7 +340,6 @@ editor_response = code_editor(
 
 query_input = editor_response['text']
 should_run = editor_response['type'] == "submit"
-
 
 # ---------------------------------------------------------
 # 5. EXECUTION LOGIC

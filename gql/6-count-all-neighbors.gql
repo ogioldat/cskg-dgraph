@@ -1,0 +1,8 @@
+query count_neighbors($id: string) {
+  q(func: uid($id)) {
+    uid
+    label
+    outgoing_count: count(rel)
+    incoming_count: count(~rel)
+  }
+}

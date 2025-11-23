@@ -1,0 +1,7 @@
+query no_predecessors {
+  # Finds nodes with label but 0 incoming edges
+  q(func: has(label)) @filter(eq(count(~rel), 0)) {
+    uid
+    label
+  }
+}

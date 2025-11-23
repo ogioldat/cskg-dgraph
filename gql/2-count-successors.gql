@@ -1,0 +1,7 @@
+query count_successors($id: string) {
+  q(func: uid($id)) {
+    uid
+    label
+    count(rel)
+  }
+}

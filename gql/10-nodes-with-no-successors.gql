@@ -1,0 +1,7 @@
+query no_successors {
+  # Finds nodes with label but 0 outgoing edges
+  q(func: has(label)) @filter(eq(count(rel), 0)) {
+    uid
+    label
+  }
+}

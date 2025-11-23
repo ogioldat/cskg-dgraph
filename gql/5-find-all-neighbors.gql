@@ -1,0 +1,16 @@
+query find_neighbors($id: string) {
+  q(func: uid($id)) {
+    uid
+    label
+    # Outgoing neighbors
+    rel @facets {
+      uid
+      label
+    }
+    # Incoming neighbors
+    ~rel @facets {
+      uid
+      label
+    }
+  }
+}

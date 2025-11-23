@@ -1,0 +1,11 @@
+query find_predecessors($id: string) {
+  q(func: uid($id)) {
+    uid
+    label
+    # ~rel denotes the reverse edge (incoming connections)
+    ~rel @facets {
+      uid
+      label
+    }
+  }
+}

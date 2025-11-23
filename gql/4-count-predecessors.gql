@@ -1,0 +1,7 @@
+query count_predecessors($id: string) {
+  q(func: uid($id)) {
+    uid
+    label
+    count(~rel)
+  }
+}

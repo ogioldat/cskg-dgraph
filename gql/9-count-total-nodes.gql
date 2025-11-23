@@ -1,0 +1,6 @@
+query count_all_nodes {
+  # Counts all nodes that have a 'label'
+  node_count(func: has(label)) {
+    count(uid)
+  }
+}

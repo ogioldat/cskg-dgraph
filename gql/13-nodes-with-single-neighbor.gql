@@ -1,0 +1,21 @@
+query single_neighbor {
+  var(func: has(label)) {
+    c_out as count(rel)
+    c_in as count(~rel)
+    total as math(c_out + c_in)
+  }
+
+  # Returns count of nodes with exactly 1 neighbor
+  count_single(func: uid(total)) @filter(eq(val(total), 1)) {
+    count(uid)
+  }
+  
+  # Returns the first 20 examples
+  examples(func: uid(total), first: 20) @filter(eq(val(total), 1)) {
+    uid
+    label
+    # Show the neighbor for context
+    rel @facets { uid label }
+    ~rel @facets { uid label }
+  }
+}

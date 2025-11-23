@@ -1,0 +1,14 @@
+query grandparents($id: string) {
+  q(func: uid($id)) {
+    uid
+    label
+    ~rel @facets {
+      uid
+      label
+      ~rel @facets {
+        uid
+        label
+      }
+    }
+  }
+}
