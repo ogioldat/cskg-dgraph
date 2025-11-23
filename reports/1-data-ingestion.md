@@ -25,3 +25,21 @@ Import data from MySQL -> Dgraph.
 Out primary choice for data ingestion was `Initial Import`. However we experienced issues with this approach. The schema was not getting loaded correctly -- always only one field from schema was loaded, the others were ignored. Data was not getting inserted, just `uid` + just one of the schema fields that managed to load.
 
 We decided to use `Live Import` and managed to load the data. There we couple problems on the way, such as db timeouts. To mitigate the timeouts we split data into small chunks 1000 entries per JSON file and 7 separate file directories -- not to load all at once.
+
+## Problems
+
+Generating dynamic schema gives the ability to visualize nicely the graphs, but this causes type Concept to explode with 38k relations, and query such as below takes much time to finalize, also 38k relations means 38k indices which sounds like a terrible idea.
+  
+```gql
+
+{
+  q(func: eq(label, "0")) {
+    uid
+    expand(_all_) {
+      expand(_all_)
+    }
+  }
+}
+```
+
+![alt text](<Screenshot 2025-11-23 at 13.32.58.png>)

@@ -10,7 +10,7 @@ SCHEMA="/@schema.dql"
 RDFFILE="/data/out/"
 
 
-my_alpha=alpha:7080
+my_alpha=alpha-1:7080
 my_zero=zero:5080
 
 

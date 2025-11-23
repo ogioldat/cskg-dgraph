@@ -3,7 +3,7 @@ label: string @index(fulltext, term, exact) .
 rel: [uid] @reverse .
 
 type Concept {
-    uri
+    uri 
     label
     rel
 }

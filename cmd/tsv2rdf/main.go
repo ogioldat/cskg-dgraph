@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func main() {
@@ -85,8 +84,8 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node1, true), escapeStr(node1Label, false))
-			fmt.Fprintf(buf, "\n")
-			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node1, true), "Concept")
+			// fmt.Fprintf(buf, "\n")
+			// fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node1, true), "Concept")
 
 			fmt.Fprintf(buf, "\n")
 
@@ -99,8 +98,8 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node2, true), escapeStr(node2Label, false))
-			fmt.Fprintf(buf, "\n")
-			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node2, true), "Concept")
+			// fmt.Fprintf(buf, "\n")
+			// fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node2, true), "Concept")
 
 			fmt.Fprintf(buf, "\n")
 
@@ -112,23 +111,19 @@ func main() {
 		}
 
 		// Original relation labels
-		rdfRelation := []byte(
-			strings.ReplaceAll(strings.ReplaceAll(
-				strings.ReplaceAll(string(relationLabel),
-					" ", "_"),
-				"|",
-				"_",
-			),
-				"/r/", ""),
-		)
+		// rdfRelation := []byte(
+		// 	strings.ReplaceAll(
+		// 		strings.ReplaceAll(string(relationLabel),
+		// 			" ", "_"),
+		// 		"|",
+		// 		"_",
+		// 	),
+		// )
 		// Synthetic label
 		// rdfRelation := []byte("rel")
 
-		relationCache[string(rdfRelation)] = true
-
-		fmt.Fprintf(buf, `<_:%s> <%s> <_:%s> (edge_id="%s", relation="%s", label="%s", source="%s", sentence="%s") .`,
+		fmt.Fprintf(buf, `<_:%s> <rel> <_:%s> (edge_id="%s", relation="%s", label="%s", source="%s", sentence="%s") .`,
 			escapeStr(node1, true),
-			escapeStr(rdfRelation, true),
 			escapeStr(node2, true),
 			escapeStr(edgeId, false),
 			escapeStr(relation, false),
@@ -136,6 +131,12 @@ func main() {
 			escapeStr(source, false),
 
 			escapeStr(sentence, false),
+		)
+		fmt.Fprintf(buf, "\n")
+
+		fmt.Fprintf(buf, `<_:%s> <rel_label> "%s" .`,
+			escapeStr(node1, true),
+			escapeStr(relationLabel, true),
 		)
 
 		if objCount > 0 {
