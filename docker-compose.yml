@@ -36,23 +36,6 @@ services:
       - zero
     command: 'bash /bulk-load.sh'
 
-  # alpha-2:
-  #   image: dgraph/dgraph:latest
-  #   container_name: dgraph-alpha-2
-  #   ports:
-  #     - 8081:8081
-  #     - 7081:7081
-  #     - 9081:9081
-  #   volumes:
-  #     - type: volume
-  #       target: /dgraph
-  #       source: dgraph-alpha-2
-  #       volume:
-  #         nocopy: true
-  #   depends_on:
-  #     - zero
-  #   command: dgraph alpha --zero=zero-0:5080 --my=alpha-1:7081 -o=1
-
   ratel:
     image: dgraph/ratel:latest
     ports:

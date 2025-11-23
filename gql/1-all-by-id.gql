@@ -1,0 +1,12 @@
+query all($id: string) {
+  q(func: uid($id)) {
+    uid
+    label
+    rel_label
+    rel @facets {
+      uid
+      uri
+      label
+    }
+  }
+}
