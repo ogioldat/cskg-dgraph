@@ -84,6 +84,9 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node1, true), escapeStr(node1Label, false))
+
+			fmt.Fprintf(buf, "\n")
+			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "Concept" .`, escapeStr(node1, true))
 			// fmt.Fprintf(buf, "\n")
 			// fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node1, true), "Concept")
 
@@ -98,6 +101,9 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <label> "%s" .`, escapeStr(node2, true), escapeStr(node2Label, false))
+
+			fmt.Fprintf(buf, "\n")
+			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "Concept" .`, escapeStr(node2, true))
 			// fmt.Fprintf(buf, "\n")
 			// fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node2, true), "Concept")
 
@@ -132,12 +138,12 @@ func main() {
 
 			escapeStr(sentence, false),
 		)
-		fmt.Fprintf(buf, "\n")
+		// fmt.Fprintf(buf, "\n")
 
-		fmt.Fprintf(buf, `<_:%s> <rel_label> "%s" .`,
-			escapeStr(node1, true),
-			escapeStr(relationLabel, true),
-		)
+		// fmt.Fprintf(buf, `<_:%s> <rel_label> "%s" .`,
+		// 	escapeStr(node1, true),
+		// 	escapeStr(relationLabel, true),
+		// )
 
 		if objCount > 0 {
 			if _, err := fmt.Fprintf(w, "\n"); err != nil {

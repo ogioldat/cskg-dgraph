@@ -1,9 +1,9 @@
 uri: string @index(exact) .
-label: string @index(fulltext, term, exact) .
-rel: [uid] @reverse .
+label: string @index(term, exact) .
+rel: [uid] @reverse @count .
 
 type Concept {
-    uri 
+    uri
     label
     rel
 }

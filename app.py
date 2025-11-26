@@ -15,13 +15,18 @@ from code_editor import code_editor
 # ---------------------------------------------------------
 st.set_page_config(page_title="Dgraph Explorer", layout="wide")
 
+
 @st.cache_resource
 def get_dgraph_client():
     # Update this if your Dgraph is running elsewhere
-    client_stub = pydgraph.DgraphClientStub("localhost:9080")
+    client_stub = pydgraph.DgraphClientStub(
+        "localhost:9080",
+    )
     return pydgraph.DgraphClient(client_stub)
 
+
 client = get_dgraph_client()
+
 
 # ---------------------------------------------------------
 # 2. HELPER FUNCTIONS
@@ -30,104 +35,125 @@ def run_query(query, vars=None):
     """Executes the query against Dgraph."""
     try:
         txn = client.txn(read_only=True)
-        res = txn.query(query, variables=vars or {})
+        res = txn.query(query, variables=vars or {}, timeout=10)
         return json.loads(res.json)
     except Exception as e:
         st.error(f"Query Error: {e}")
         return None
 
+
 def get_color_from_string(string_val):
     """Generates a consistent hex color from a string."""
     if not string_val:
-        return "#97c2fc" 
+        return "#97c2fc"
     hash_object = hashlib.md5(string_val.encode())
     hex_hash = hash_object.hexdigest()
     return f"#{hex_hash[:6]}"
+
 
 def create_details_html(data_dict, title="Details"):
     """Formats a dictionary into a clean HTML block for the sidebar panel."""
     rows = []
     for k, v in data_dict.items():
-        if isinstance(v, (list, dict)): continue
+        if isinstance(v, (list, dict)):
+            continue
         rows.append(f"""
             <div style='margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;'>
                 <span style='font-weight:bold; display:block; color:#666; font-size: 0.85em; text-transform: uppercase;'>{k}</span>
                 <span style='color:#222; word-break: break-word; font-family: monospace;'>{v}</span>
             </div>
         """)
-    
+
     return f"""
     <div>
         <h3 style='margin-top:0; border-bottom:2px solid #ff5733; padding-bottom:10px; margin-bottom: 15px; color:#333;'>{title}</h3>
-        <div>{ "".join(rows) }</div>
+        <div>{"".join(rows)}</div>
     </div>
     """
+
 
 def generate_pyvis_html(dgraph_res):
     """Converts Dgraph JSON to a PyVis HTML string with Click-to-Show Details and Responsive Fullscreen."""
     G = nx.DiGraph()
-    
-    data = dgraph_res.get('q', [])
+
+    data = dgraph_res.get("q", [])
     if not data:
         return None
 
     for parent in data:
-        p_uid = parent.get('uid')
-        p_label = parent.get('label', p_uid)
-        
+        p_uid = parent.get("uid")
+        p_label = parent.get("label", p_uid)
+
         # 1. Parent Node
-        p_attrs = {k: v for k, v in parent.items() if k != 'rel'}
+        p_attrs = {k: v for k, v in parent.items() if k != "rel"}
         p_details = create_details_html(p_attrs, title=f"Node: {p_label}")
-        
-        G.add_node(p_uid, label=p_label, details_html=p_details, color="#ff5733", size=30)
-        
-        relationships = parent.get('rel', [])
+
+        G.add_node(
+            p_uid, label=p_label, details_html=p_details, color="#ff5733", size=30
+        )
+
+        relationships = parent.get("rel", [])
         for child in relationships:
-            c_uid = child.get('uid')
-            c_label = child.get('label', c_uid)
-            
+            c_uid = child.get("uid")
+            c_label = child.get("label", c_uid)
+
             # 2. Separate Edge Data from Node Data
-            edge_attrs = {k: v for k, v in child.items() if k.startswith('rel|')}
-            node_attrs = {k: v for k, v in child.items() if not k.startswith('rel|')}
-            
-            edge_label_text = edge_attrs.get('rel|label', '')
+            edge_attrs = {k: v for k, v in child.items() if k.startswith("rel|")}
+            node_attrs = {k: v for k, v in child.items() if not k.startswith("rel|")}
+
+            edge_label_text = edge_attrs.get("rel|label", "")
             visual_color = get_color_from_string(edge_label_text)
-            
+
             # 3. Target Node
             c_details = create_details_html(node_attrs, title=f"Node: {c_label}")
-            G.add_node(c_uid, label=c_label, details_html=c_details, color=visual_color, size=20)
-            
-            # 4. Edge
-            e_details = create_details_html(edge_attrs, title=f"Edge: {edge_label_text}")
-            G.add_edge(
-                p_uid, 
-                c_uid, 
-                label=edge_label_text,
-                details_html=e_details, 
+            G.add_node(
+                c_uid,
+                label=c_label,
+                details_html=c_details,
                 color=visual_color,
-                font={'align': 'middle', 'size': 10}
+                size=20,
+            )
+
+            # 4. Edge
+            e_details = create_details_html(
+                edge_attrs, title=f"Edge: {edge_label_text}"
+            )
+            G.add_edge(
+                p_uid,
+                c_uid,
+                label=edge_label_text,
+                details_html=e_details,
+                color=visual_color,
+                font={"align": "middle", "size": 10},
             )
 
     # Configure PyVis
     # Initial height is 600px, but CSS will override this in fullscreen
     net = Network(height="600px", width="100%", bgcolor="#222222", font_color="white")
     net.from_nx(G)
-    net.force_atlas_2based(gravity=-50, central_gravity=0.01, spring_length=100, spring_strength=0.08, damping=0.4, overlap=0)
+    net.force_atlas_2based(
+        gravity=-50,
+        central_gravity=0.01,
+        spring_length=100,
+        spring_strength=0.08,
+        damping=0.4,
+        overlap=0,
+    )
 
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
             net.save_graph(tmp.name)
             path = tmp.name
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             html_string = f.read()
-        
+
         os.remove(path)
 
         # ---------------------------------------------------------
-        # INJECT CUSTOM CSS & JS 
+        # INJECT CUSTOM CSS & JS
         # ---------------------------------------------------------
-        
+
         custom_css = """
         <style>
             /* Info Panel Styling */
@@ -274,7 +300,7 @@ def generate_pyvis_html(dgraph_res):
             });
         </script>
         """
-        
+
         html_string = html_string.replace("</body>", f"{custom_css}{custom_js}</body>")
         return html_string
 
@@ -282,15 +308,20 @@ def generate_pyvis_html(dgraph_res):
         st.error(f"Visualization Error: {e}")
         return None
 
+
 def load_gql_files(directory="gql"):
     """Loads .gql and .graphql files from a directory into a dictionary."""
     queries = {}
     if not os.path.exists(directory):
         os.makedirs(directory)
-        st.sidebar.warning(f"Created missing directory: '{directory}'. Please add .gql files there.")
+        st.sidebar.warning(
+            f"Created missing directory: '{directory}'. Please add .gql files there."
+        )
         return {"Example (No files found)": "query { q(func: uid(0x123)) { uid } }"}
 
-    files = glob.glob(os.path.join(directory, "*.gql")) + glob.glob(os.path.join(directory, "*.graphql"))
+    files = glob.glob(os.path.join(directory, "*.gql")) + glob.glob(
+        os.path.join(directory, "*.graphql")
+    )
     if not files:
         return {"No .gql files found": ""}
 
@@ -298,8 +329,11 @@ def load_gql_files(directory="gql"):
         filename = os.path.basename(filepath)
         with open(filepath, "r") as f:
             queries[filename] = f.read()
-            
-    return dict(sorted(queries.items(), key=lambda kv: int(kv[0][0:2].replace('-',''))))
+
+    return dict(
+        sorted(queries.items(), key=lambda kv: int(kv[0][0:2].replace("-", "")))
+    )
+
 
 # ---------------------------------------------------------
 # 3. SIDEBAR: CONTROLS
@@ -307,7 +341,6 @@ def load_gql_files(directory="gql"):
 st.sidebar.header("Query Configuration")
 
 query_map = load_gql_files("gql")
-print(query_map)
 selected_filename = st.sidebar.selectbox("Select Query File", list(query_map.keys()))
 target_uid = st.sidebar.text_input("Target UID ($id)", value="0x123")
 
@@ -318,15 +351,17 @@ st.title("🕸️ Dgraph Visualizer")
 
 default_query_content = query_map.get(selected_filename, "")
 
-custom_btns = [{
-    "name": "Run",
-    "feather": "Play",
-    "primary": True,
-    "hasText": True,
-    "alwaysOn": True,
-    "commands": ["submit"], 
-    "style": {"bottom": "0.44rem", "right": "0.4rem"}
-}]
+custom_btns = [
+    {
+        "name": "Run",
+        "feather": "Play",
+        "primary": True,
+        "hasText": True,
+        "alwaysOn": True,
+        "commands": ["submit"],
+        "style": {"bottom": "0.44rem", "right": "0.4rem"},
+    }
+]
 
 editor_response = code_editor(
     default_query_content,
@@ -335,11 +370,17 @@ editor_response = code_editor(
     theme="monokai",
     buttons=custom_btns,
     key=f"editor_{selected_filename}",
-    options={"wrap": True, "fontSize": 14, "showLineNumbers": True, "highlightActiveLine": True, "tabSize": 2}
+    options={
+        "wrap": True,
+        "fontSize": 14,
+        "showLineNumbers": True,
+        "highlightActiveLine": True,
+        "tabSize": 2,
+    },
 )
 
-query_input = editor_response['text']
-should_run = editor_response['type'] == "submit"
+query_input = editor_response["text"]
+should_run = editor_response["type"] == "submit"
 
 # ---------------------------------------------------------
 # 5. EXECUTION LOGIC
@@ -357,7 +398,9 @@ if should_run:
                 if html_data:
                     components.html(html_data, height=600, scrolling=False)
                 else:
-                    st.warning("No graph data found in response (check if 'q' is empty).")
+                    st.warning(
+                        "No graph data found in response (check if 'q' is empty)."
+                    )
 
             with tab_json:
                 st.json(result_data)
