@@ -1,4 +1,4 @@
-query find_predecessors($id: string) {
+query find_predecessors($id: string, $first: int = 10000, $offset: int = 0) {
   q(func: uid($id)) {
     uid
     label

@@ -1,16 +1,13 @@
 query most_neighbors {
-  # 1. Calculate counts into variables
-  var(func: has(label)) {
-    c_out as count(rel)
-    c_in as count(~rel)
-    # Sum outgoing and incoming
-    total as math(c_out + c_in)
-  }
-
-  # 2. Order by the calculated total and take top 10
-  q(func: uid(total), orderdesc: val(total), first: 10) {
+  q(func: type(Concept), orderdesc: neighbors_cnt, first: 10) {
     uid
     label
-    neighbor_count: val(total)
+  	rel @facets {
+      uid
+      label
+    }
+  	outgoing_cnt
+  	ingoing_cnt
+		neighbors_cnt
   }
 }

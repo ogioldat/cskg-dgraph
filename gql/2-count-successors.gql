@@ -1,4 +1,4 @@
-query count_successors($id: string) {
+query count_successors($id: string, $first: int = 10000, $offset: int = 0) {
   q(func: uid($id)) {
     uid
     label

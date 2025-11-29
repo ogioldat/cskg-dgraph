@@ -6,7 +6,7 @@ THIS_DIR=`dirname $0`
 
 echo "$THIS_DIR THIS_DIR"
 
-SCHEMA="/@schema.dql"
+SCHEMA="/schema.dql"
 RDFFILE="/data/out/"
 
 

@@ -1,4 +1,4 @@
-query grandparents($id: string) {
+query grandparents($id: string, $first: int = 10000, $offset: int = 0) {
   q(func: uid($id)) {
     uid
     label

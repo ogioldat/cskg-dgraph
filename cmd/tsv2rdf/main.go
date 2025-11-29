@@ -10,6 +10,12 @@ import (
 	"path/filepath"
 )
 
+type node struct {
+	ingoingCnt  int
+	outgoingCnt int
+	nodeId      []byte
+}
+
 func main() {
 	r := bufio.NewReaderSize(os.Stdin, 64*1024)
 
@@ -17,7 +23,7 @@ func main() {
 	var f *os.File
 	var lineNum int
 	var objCount int
-	nodeCache := make(map[[32]byte]bool)
+	nodeCache := make(map[[32]byte]node)
 	relationCache := make(map[string]bool)
 
 	name := "data/out/data.rdf"
@@ -92,7 +98,9 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 
-			nodeCache[node1Hash] = true
+			nodeCache[node1Hash] = node{
+				nodeId: node1,
+			}
 		}
 
 		_, hasNode2 := nodeCache[node2Hash]
@@ -109,7 +117,9 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 
-			nodeCache[node2Hash] = true
+			nodeCache[node2Hash] = node{
+				nodeId: node2,
+			}
 		}
 
 		if len(relationLabel) < 1 {
@@ -138,6 +148,13 @@ func main() {
 
 			escapeStr(sentence, false),
 		)
+
+		node1Cnt := nodeCache[node1Hash]
+		node2Cnt := nodeCache[node2Hash]
+
+		nodeCache[node1Hash] = node{nodeId: node1, outgoingCnt: node1Cnt.outgoingCnt + 1, ingoingCnt: node1Cnt.ingoingCnt}
+		nodeCache[node2Hash] = node{nodeId: node2, ingoingCnt: node2Cnt.ingoingCnt + 1, outgoingCnt: node2Cnt.outgoingCnt}
+
 		// fmt.Fprintf(buf, "\n")
 
 		// fmt.Fprintf(buf, `<_:%s> <rel_label> "%s" .`,
@@ -155,6 +172,21 @@ func main() {
 			fmt.Fprintf(os.Stderr, "write buffer error at line %d: %v\n", lineNum, err)
 		}
 		objCount++
+	}
+
+	buf := bytes.NewBufferString("")
+
+	for _, currNode := range nodeCache {
+		fmt.Fprintf(buf, "\n")
+		fmt.Fprintf(buf, `<_:%s> <ingoing_cnt> "%d"^^<xs:int> .`, escapeStr(currNode.nodeId, true), currNode.ingoingCnt)
+		fmt.Fprintf(buf, "\n")
+		fmt.Fprintf(buf, `<_:%s> <outgoing_cnt> "%d"^^<xs:int> .`, escapeStr(currNode.nodeId, true), currNode.outgoingCnt)
+		fmt.Fprintf(buf, "\n")
+		fmt.Fprintf(buf, `<_:%s> <neighbors_cnt> "%d"^^<xs:int> .`, escapeStr(currNode.nodeId, true), currNode.outgoingCnt+currNode.ingoingCnt)
+	}
+
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		fmt.Fprintf(os.Stderr, "write buffer error at line %d: %v\n", lineNum, err)
 	}
 
 	if w == nil {

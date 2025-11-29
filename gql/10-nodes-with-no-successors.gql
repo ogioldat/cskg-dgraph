@@ -1,7 +1,17 @@
-query no_successors {
-  # Finds nodes with label but 0 outgoing edges
-  q(func: has(label)) @filter(eq(count(rel), 0)) {
+query no_successors($first: int = 10000, $offset: int = 0, $id: int) {
+  var(func: eq(outgoing_cnt, 0)) {
+    S as uid
+  }
+
+  total(func: uid(S)) {
+    count(uid)
+  }
+
+  q(func: uid(S), first: $first, offset: $offset) {
     uid
     label
+    rel {
+      uid
+    }
   }
 }

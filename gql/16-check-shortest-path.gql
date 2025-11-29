@@ -1,0 +1,10 @@
+query shortest_path {
+  path as shortest(from: 0x10, to: 0x20, depth: 4)  {
+    rel
+	}
+
+  result(func: uid(path)) {
+    uid
+    label
+  }
+}

@@ -1,9 +1,0 @@
-uri: string @index(exact) .
-label: string @index(term, exact) .
-rel: [uid] @reverse @count .
-
-type Concept {
-    uri
-    label
-    rel
-}

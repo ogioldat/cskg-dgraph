@@ -1,0 +1,33 @@
+query similar_nodes($id: string = "0x26") {
+
+  var(func: uid($id)) {
+    ~rel {
+      commonParentNodes as rel
+    }
+  	rel {
+  		commonChildNodes as ~rel
+  	}
+  }
+	
+  target(func: uid($id)) {
+    uid
+    label
+    # ~rel {
+    #   uid
+    #   label
+    # }
+    # rel @facets {
+    #   uid
+    #   label
+    # }
+  }
+  
+  q(func: uid(commonParentNodes, commonChildNodes)) @filter(NOT uid($id)) {
+    uid
+    label
+    # rel @facets {
+    #   uid
+    #   label
+    # }
+  }
+}

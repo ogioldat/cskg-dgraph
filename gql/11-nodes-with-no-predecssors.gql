@@ -1,7 +1,17 @@
-query no_predecessors {
-  # Finds nodes with label but 0 incoming edges
-  q(func: has(label)) @filter(eq(count(~rel), 0)) {
+query no_predecessors($first: int = 1000, $offset: int = 0, $id: int) {
+  var(func: eq(ingoing_cnt, 0)) {
+    S as uid
+  }
+
+  total(func: uid(S)) {
+    count(uid)
+  }
+
+  q(func: uid(S), first: $first, offset: $offset) {
     uid
     label
+    ~rel {
+        uid
+    }
   }
 }

@@ -1,0 +1,11 @@
+{
+  "set": [
+    {
+      "uid": "_:test"
+    },
+    {
+      "uri": "updated uri",
+      "label": "new label"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+uri: string @index(exact) .
+label: string @index(term, exact) .
+rel: [uid] @reverse @count .
+ingoing_cnt: int @index(int) .
+outgoing_cnt: int @index(int) .
+neighbors_cnt: int @index(int) .
+
+type Concept {
+    uri
+    label
+    rel
+    ingoing_cnt
+    outgoing_cnt
+    neighbors_cnt
+}
