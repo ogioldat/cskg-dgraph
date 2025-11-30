@@ -24,7 +24,6 @@ func main() {
 	var lineNum int
 	var objCount int
 	nodeCache := make(map[[32]byte]node)
-	relationCache := make(map[string]bool)
 
 	name := "data/out/data.rdf"
 
@@ -93,8 +92,6 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "Concept" .`, escapeStr(node1, true))
-			// fmt.Fprintf(buf, "\n")
-			// fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node1, true), "Concept")
 
 			fmt.Fprintf(buf, "\n")
 
@@ -112,8 +109,6 @@ func main() {
 
 			fmt.Fprintf(buf, "\n")
 			fmt.Fprintf(buf, `<_:%s> <dgraph.type> "Concept" .`, escapeStr(node2, true))
-			// fmt.Fprintf(buf, "\n")
-			// fmt.Fprintf(buf, `<_:%s> <dgraph.type> "%s" .`, escapeStr(node2, true), "Concept")
 
 			fmt.Fprintf(buf, "\n")
 
@@ -125,18 +120,6 @@ func main() {
 		if len(relationLabel) < 1 {
 			continue
 		}
-
-		// Original relation labels
-		// rdfRelation := []byte(
-		// 	strings.ReplaceAll(
-		// 		strings.ReplaceAll(string(relationLabel),
-		// 			" ", "_"),
-		// 		"|",
-		// 		"_",
-		// 	),
-		// )
-		// Synthetic label
-		// rdfRelation := []byte("rel")
 
 		fmt.Fprintf(buf, `<_:%s> <rel> <_:%s> (edge_id="%s", relation="%s", label="%s", source="%s", sentence="%s") .`,
 			escapeStr(node1, true),
@@ -154,13 +137,6 @@ func main() {
 
 		nodeCache[node1Hash] = node{nodeId: node1, outgoingCnt: node1Cnt.outgoingCnt + 1, ingoingCnt: node1Cnt.ingoingCnt}
 		nodeCache[node2Hash] = node{nodeId: node2, ingoingCnt: node2Cnt.ingoingCnt + 1, outgoingCnt: node2Cnt.outgoingCnt}
-
-		// fmt.Fprintf(buf, "\n")
-
-		// fmt.Fprintf(buf, `<_:%s> <rel_label> "%s" .`,
-		// 	escapeStr(node1, true),
-		// 	escapeStr(relationLabel, true),
-		// )
 
 		if objCount > 0 {
 			if _, err := fmt.Fprintf(w, "\n"); err != nil {
@@ -205,27 +181,6 @@ func main() {
 	if lineNum != 6001533 {
 		fmt.Println("Expected lines", 6001533)
 	}
-
-	schemaRelationsDefBuf := bytes.NewBufferString("")
-	schemaRelationsBuf := bytes.NewBufferString("")
-	for k := range relationCache {
-		fmt.Fprintf(schemaRelationsDefBuf, "%s: [uid] @reverse .\n", k)
-		fmt.Fprintf(schemaRelationsBuf, "\t%s\n", k)
-	}
-
-	schema := bytes.NewBufferString("")
-
-	fmt.Fprintf(schema, "uri: string @index(exact) .\n")
-	fmt.Fprintf(schema, "label: string @index(fulltext, term, exact) .\n")
-	fmt.Fprintf(schema, "%s\n", schemaRelationsDefBuf)
-
-	fmt.Fprintf(schema, `type Concept {
-    uri
-    label`)
-	fmt.Fprintf(schema, "\n%s", schemaRelationsBuf)
-	fmt.Fprintf(schema, "\n}\n")
-
-	os.WriteFile("data/schema.dql", schema.Bytes(), 0644)
 
 }
 

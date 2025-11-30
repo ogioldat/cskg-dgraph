@@ -1,5 +1,5 @@
 uri: string @index(exact) .
-label: string @index(term, exact) .
+label: string @index(exact) .
 rel: [uid] @reverse @count .
 ingoing_cnt: int @index(int) .
 outgoing_cnt: int @index(int) .
