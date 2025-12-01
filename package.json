@@ -1,0 +1,16 @@
+{
+  "name": "cskg-dgraph",
+  "version": "1.0.0",
+  "description": "Ingest >6M relations into the Dgraph database",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "husky": "^8.0.0"
+  },
+  "scripts": {
+    "prepare": "husky install"
+  }
+}
