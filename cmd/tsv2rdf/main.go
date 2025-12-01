@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type node struct {
@@ -24,6 +25,7 @@ func main() {
 	var lineNum int
 	var objCount int
 	nodeCache := make(map[[32]byte]node)
+	relationCache := make(map[string]bool)
 
 	name := "data/out/data.rdf"
 
@@ -120,15 +122,26 @@ func main() {
 		if len(relationLabel) < 1 {
 			continue
 		}
+		rdfRelation := []byte(
+			strings.ReplaceAll(strings.ReplaceAll(
+				strings.ReplaceAll(string(relationLabel),
+					" ", "_"),
+				"|",
+				"_",
+			),
+				"/r/", ""),
+		)
 
-		fmt.Fprintf(buf, `<_:%s> <rel> <_:%s> (edge_id="%s", relation="%s", label="%s", source="%s", sentence="%s") .`,
+		relationCache[string(rdfRelation)] = true
+
+		fmt.Fprintf(buf, `<_:%s> <%s> <_:%s> (edge_id="%s", relation="%s", label="%s", source="%s", sentence="%s") .`,
 			escapeStr(node1, true),
+			escapeStr(rdfRelation, true),
 			escapeStr(node2, true),
 			escapeStr(edgeId, false),
 			escapeStr(relation, false),
 			escapeStr(relationLabel, false),
 			escapeStr(source, false),
-
 			escapeStr(sentence, false),
 		)
 
@@ -181,6 +194,27 @@ func main() {
 	if lineNum != 6001533 {
 		fmt.Println("Expected lines", 6001533)
 	}
+
+	schemaRelationsDefBuf := bytes.NewBufferString("")
+	schemaRelationsBuf := bytes.NewBufferString("")
+	for k := range relationCache {
+		fmt.Fprintf(schemaRelationsDefBuf, "%s: [uid] @reverse .\n", k)
+		fmt.Fprintf(schemaRelationsBuf, "\t%s\n", k)
+	}
+
+	schema := bytes.NewBufferString("")
+
+	fmt.Fprintf(schema, "uri: string @index(exact) .\n")
+	fmt.Fprintf(schema, "label: string @index(fulltext, term, exact) .\n")
+	fmt.Fprintf(schema, "%s\n", schemaRelationsDefBuf)
+
+	fmt.Fprintf(schema, `type Concept {
+    uri
+    label`)
+	fmt.Fprintf(schema, "\n%s", schemaRelationsBuf)
+	fmt.Fprintf(schema, "\n}\n")
+
+	os.WriteFile("./schema-dynamic.dql", schema.Bytes(), 0644)
 
 }
 

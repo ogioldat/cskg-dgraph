@@ -29,7 +29,7 @@ services:
         source: dgraph-alpha-1
         volume:
           nocopy: true
-      - ./schema.dql:/schema.dql
+      - ./schema-dynamic.dql:/schema.dql
       - ./data:/data
       - ./bulk-load.sh:/bulk-load.sh
     depends_on:
