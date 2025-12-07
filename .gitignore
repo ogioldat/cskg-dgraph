@@ -8,3 +8,4 @@ p
 out
 node_modules
 .mypy_cache
+logs/*.log

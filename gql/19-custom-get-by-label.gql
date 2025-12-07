@@ -1,0 +1,12 @@
+query by_label($label: string, $first: int = 10000, $offset: int = 0) {
+  q(func: eq(label,$label)) {
+    uid
+	uri
+    label
+    rel {
+      uid
+      uri
+      label
+    }
+  }
+}

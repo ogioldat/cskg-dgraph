@@ -13,13 +13,12 @@ func main() {
 	c := NewClient()
 
 	runner := QueryRunner{conn: c, queryMap: queries}
-	nodes, err := runner.getByLabel("synonym")
 
-	FindDistantSynonyms(runner, "0x2f4e0b")
+	res := FindDistantSynonyms(runner, "0x61a8b", 4, 4)
+
+	log.Println(res)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Println(nodes)
 }

@@ -1,101 +1,125 @@
 package main
 
 import (
-	"log"
-	"math"
-	"os"
 	"sync"
-
-	"github.com/dominikbraun/graph"
-
-	"github.com/dominikbraun/graph/draw"
 )
 
-/*
-The dataset contains many synonyms and antonyms (their ids are
-"/r/Synonym", "/r/Antonym"). Let's define a distant synonym and
-antonym as a node connected by a series of synonym or antonym relations. Synonym of a synonym is a synonym, synonym of an antonym
-is an antonym, antonym of an antonym is a synonym, etc. Find all
-distant synonyms of a given node at a specified distance (length of the
-shortest path), given as a command parameter.
-
-n1 -synonym-> n2 -synonym-> n3 -antonym-> n4 -antonym-> n5 (synonym)
-*/
-
-func getByIdsBatched(runner QueryRunner, ids []string, batchSize int) []ConceptResponse {
-	numBatches := int(math.Ceil(float64(len(ids)) / float64(batchSize)))
-
-	results := make([][]ConceptResponse, numBatches)
-
-	wg := sync.WaitGroup{}
-	wg.Add(numBatches)
-
-	for i := range numBatches {
-		go func(i int) {
-			log.Println("Fetching batch", i, batchSize)
-			defer wg.Done()
-			res, _ := runner.getByIds(ids, batchSize, i)
-
-			results[i] = res
-		}(i)
-	}
-
-	wg.Wait()
-
-	var flatRes []ConceptResponse
-
-	for _, res := range results {
-		flatRes = append(flatRes, res...)
-	}
-
-	return flatRes
+type State struct {
+	uid  string
+	sign int
 }
 
-func recursiveSearch(
-	g graph.Graph[string, string],
-	runner QueryRunner,
-	uids []string,
-	depth int,
-	maxDepth int,
-) {
-	levelNodes := getByIdsBatched(runner, uids, 5)
+func FindDistantSynonyms(runner QueryRunner, start string, wanted int, maxDepth int) []string {
+	return findRelated(runner, start, wanted, maxDepth, 1)
+}
 
-	var levelUids []string
+func FindDistantAntonyms(runner QueryRunner, start string, wanted int, maxDepth int) []string {
+	return findRelated(runner, start, wanted, maxDepth, -1)
+}
 
-	for _, node := range levelNodes {
-		g.AddVertex(node.Label)
+func findRelated(runner QueryRunner, start string, wanted int, maxDepth int, targetSign int) []string {
+	cache := make(map[string][]RelResponse)
+	visited := make(map[string]bool)
+	resultSet := make(map[string]struct{})
 
-		for _, edge := range node.Rel {
-			levelUids = append(levelUids, edge.Uid)
+	visited[start] = true
 
-			if edge.RelationLabel != "synonym" && edge.RelationLabel != "antonym" {
+	currLayer := []State{{uid: start, sign: 1}}
+
+	const batchSize = 50
+
+	for depth := 0; depth <= maxDepth; depth++ {
+		if len(currLayer) == 0 {
+			break
+		}
+
+		uniqueIds := make(map[string]struct{})
+		for _, s := range currLayer {
+			if _, ok := cache[s.uid]; !ok {
+				uniqueIds[s.uid] = struct{}{}
+			}
+		}
+
+		toFetch := make([]string, 0, len(uniqueIds))
+		for id := range uniqueIds {
+			toFetch = append(toFetch, id)
+		}
+
+		if len(toFetch) > 0 {
+			var wg sync.WaitGroup
+			var mu sync.Mutex
+
+			for i := 0; i < len(toFetch); i += batchSize {
+				wg.Add(1)
+				go func(offset int) {
+					defer wg.Done()
+					end := min(offset+batchSize, len(toFetch))
+
+					chunk := toFetch[offset:end]
+
+					nodes, _ := runner.getByIds(chunk, len(chunk), 0)
+
+					mu.Lock()
+					for _, n := range nodes {
+						cache[n.Uid] = n.Rel
+					}
+					mu.Unlock()
+				}(i)
+			}
+			wg.Wait()
+		}
+
+		if depth == wanted {
+			for _, s := range currLayer {
+				if s.uid != start && s.sign == targetSign {
+					resultSet[s.uid] = struct{}{}
+				}
+			}
+		}
+
+		if depth == maxDepth {
+			break
+		}
+
+		nextLayer := make([]State, 0, len(currLayer)*2)
+		nextLayerMap := make(map[State]bool)
+
+		for _, s := range currLayer {
+			edges, ok := cache[s.uid]
+			if !ok {
 				continue
 			}
 
-			g.AddVertex(edge.Label)
+			for _, e := range edges {
+				if e.RelationLabel != "synonym" && e.RelationLabel != "antonym" {
+					continue
+				}
 
-			g.AddEdge(
-				node.Label,
-				edge.Label,
-				graph.EdgeAttribute("label", edge.RelationLabel),
-			)
+				if visited[e.Uid] {
+					continue
+				}
+
+				nextSign := s.sign
+				if e.RelationLabel == "antonym" {
+					nextSign *= -1
+				}
+
+				nextState := State{uid: e.Uid, sign: nextSign}
+
+				if !nextLayerMap[nextState] {
+					visited[e.Uid] = true
+					nextLayerMap[nextState] = true
+					nextLayer = append(nextLayer, nextState)
+				}
+			}
 		}
+
+		currLayer = nextLayer
 	}
 
-	if len(levelUids) > 0 {
-		recursiveSearch(g, runner, levelUids, depth+1, maxDepth)
+	out := make([]string, 0, len(resultSet))
+	for k := range resultSet {
+		out = append(out, k)
 	}
-}
-
-func FindDistantSynonyms(runner QueryRunner, targetNodeId string) {
-	MAX_DEPTH := 1
-
-	g := graph.New(graph.StringHash)
-	var depth int
-
-	recursiveSearch(g, runner, []string{targetNodeId}, depth, MAX_DEPTH)
-
-	file, _ := os.Create("./img/distant-synonyms.gv")
-	_ = draw.DOT(g, file)
-
+	return out
 }
