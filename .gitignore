@@ -1,5 +1,5 @@
 projects2025.pdf
-data
+data/*/**
 bin
 tmp
 lib

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# TODO: Fetch dgraph binary for linux
+PROJECT_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)
+
+cd PROJECT_ROOT
 
 echo 'Build TSV->RDF parser'
 

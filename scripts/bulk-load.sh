@@ -1,5 +1,9 @@
 #!/bin/bash
 
+PROJECT_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)
+
+cd PROJECT_ROOT
+
 DIR="./out/0"
 
 THIS_DIR=`dirname $0`
