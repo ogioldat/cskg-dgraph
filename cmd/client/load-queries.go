@@ -13,7 +13,7 @@ type QueryKey string
 type QueryMap map[QueryKey]string
 
 const (
-	Q01AllByID                 QueryKey = "Q01AllByID"
+	Q01AllByIDs                QueryKey = "Q01AllByIDs"
 	Q02CountSuccessors         QueryKey = "Q02CountSuccessors"
 	Q03FindPredecessors        QueryKey = "Q03FindPredecessors"
 	Q04CountPredecessors       QueryKey = "Q04CountPredecessors"
@@ -34,7 +34,7 @@ const (
 )
 
 var semanticNames = map[string]QueryKey{
-	"1":  Q01AllByID,
+	"1":  Q01AllByIDs,
 	"2":  Q02CountSuccessors,
 	"3":  Q03FindPredecessors,
 	"4":  Q04CountPredecessors,
@@ -51,6 +51,7 @@ var semanticNames = map[string]QueryKey{
 	"16": Q16CheckShortestPath,
 	"17": Q17FindDistantSynonyms,
 	"18": Q18FindDistantAntonyms,
+	"19": Q19CustomGetByLabels,
 }
 
 func LoadQueries() (QueryMap, error) {
@@ -90,19 +91,6 @@ func LoadQueries() (QueryMap, error) {
 
 		queries[semanticName] = string(content)
 	}
-
-	queries[Q19CustomGetByLabels] = `query by_label($label: string, $first: int = 10000, $offset: int = 0) {
-  q(func: eq(label,$label)) {
-    uid
-	uri
-    label
-    rel {
-      uid
-      uri
-      label
-    }
-  }
-}`
 
 	return queries, nil
 }

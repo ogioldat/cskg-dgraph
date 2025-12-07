@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/dgraph-io/dgo/v250"
 )
@@ -37,13 +39,17 @@ type ResponseRoot struct {
 	Q []ConceptResponse `json:"q"`
 }
 
-func (q *QueryRunner) getById(id string) (*[]ConceptResponse, error) {
+func (q *QueryRunner) getByIds(ids []string, first int, offset int) ([]ConceptResponse, error) {
 	txn := q.conn.NewTxn()
 	defer txn.Discard(context.Background())
 
-	query := q.queryMap[Q01AllByID]
+	query := q.queryMap[Q01AllByIDs]
 
-	vars := map[string]string{"$id": id}
+	vars := map[string]string{
+		"$id":     "[" + strings.Join(ids, ",") + "]",
+		"$first":  strconv.Itoa(first),
+		"$offset": strconv.Itoa(offset),
+	}
 	resp, err := txn.QueryWithVars(context.Background(), query, vars)
 	if err != nil {
 		log.Fatalln("Txn failed", err)
@@ -57,10 +63,10 @@ func (q *QueryRunner) getById(id string) (*[]ConceptResponse, error) {
 		return nil, err
 	}
 
-	return &r.Q, err
+	return r.Q, nil
 }
 
-func (q *QueryRunner) getByLabel(label string) (*[]ConceptResponse, error) {
+func (q *QueryRunner) getByLabel(label string) ([]ConceptResponse, error) {
 	txn := q.conn.NewTxn()
 	defer txn.Discard(context.Background())
 
@@ -80,5 +86,5 @@ func (q *QueryRunner) getByLabel(label string) (*[]ConceptResponse, error) {
 		return nil, err
 	}
 
-	return &r.Q, err
+	return r.Q, err
 }
