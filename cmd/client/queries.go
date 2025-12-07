@@ -9,7 +9,8 @@ import (
 )
 
 type QueryRunner struct {
-	conn *dgo.Dgraph
+	conn     *dgo.Dgraph
+	queryMap QueryMap
 }
 
 type RelResponse struct {
@@ -42,18 +43,8 @@ func (q *QueryRunner) getById(id string) (*[]ConceptResponse, error) {
 	txn := q.conn.NewTxn()
 	defer txn.Discard(context.Background())
 
-	query := `query all($id: string, $first: int = 10000, $offset: int = 0) {
-  q(func: uid($id)) {
-    uid
-    label
-    rel_label
-    rel @facets {
-      uid
-      uri
-      label
-    }
-  }
-}`
+	query := q.queryMap[Q01AllByID]
+
 	vars := map[string]string{"$id": id}
 	resp, err := txn.QueryWithVars(context.Background(), query, vars)
 	if err != nil {

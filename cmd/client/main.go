@@ -7,7 +7,6 @@ import (
 )
 
 func newClient() *dgo.Dgraph {
-
 	client, err := dgo.Open("dgraph://localhost:9080")
 	if err != nil {
 		client.Close()
@@ -18,9 +17,14 @@ func newClient() *dgo.Dgraph {
 }
 
 func main() {
+	queries, err := LoadQueries()
+	if err != nil {
+		log.Fatal("Failed to load query files", err)
+	}
+
 	c := newClient()
 
-	runner := QueryRunner{conn: c}
+	runner := QueryRunner{conn: c, queryMap: queries}
 	resp, err := runner.getById("0x23aa7e")
 
 	if err != nil {
