@@ -30,6 +30,7 @@ const (
 	Q16CheckShortestPath       QueryKey = "Q16CheckShortestPath"
 	Q17FindDistantSynonyms     QueryKey = "Q17FindDistantSynonyms"
 	Q18FindDistantAntonyms     QueryKey = "Q18FindDistantAntonyms"
+	Q19CustomGetByLabels       QueryKey = "Q19CustomGetByLabels"
 )
 
 var semanticNames = map[string]QueryKey{
@@ -89,6 +90,19 @@ func LoadQueries() (QueryMap, error) {
 
 		queries[semanticName] = string(content)
 	}
+
+	queries[Q19CustomGetByLabels] = `query by_label($label: string, $first: int = 10000, $offset: int = 0) {
+  q(func: eq(label,$label)) {
+    uid
+	uri
+    label
+    rel {
+      uid
+      uri
+      label
+    }
+  }
+}`
 
 	return queries, nil
 }

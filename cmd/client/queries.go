@@ -38,14 +38,35 @@ type ResponseRoot struct {
 }
 
 func (q *QueryRunner) getById(id string) (*[]ConceptResponse, error) {
-	log.Println("Querying by ID", id)
-
 	txn := q.conn.NewTxn()
 	defer txn.Discard(context.Background())
 
 	query := q.queryMap[Q01AllByID]
 
 	vars := map[string]string{"$id": id}
+	resp, err := txn.QueryWithVars(context.Background(), query, vars)
+	if err != nil {
+		log.Fatalln("Txn failed", err)
+		return nil, err
+	}
+
+	var r ResponseRoot
+	err = json.Unmarshal(resp.Json, &r)
+	if err != nil {
+		log.Fatalln("Unmarshal failed", err)
+		return nil, err
+	}
+
+	return &r.Q, err
+}
+
+func (q *QueryRunner) getByLabel(label string) (*[]ConceptResponse, error) {
+	txn := q.conn.NewTxn()
+	defer txn.Discard(context.Background())
+
+	query := q.queryMap[Q19CustomGetByLabels]
+
+	vars := map[string]string{"$label": label}
 	resp, err := txn.QueryWithVars(context.Background(), query, vars)
 	if err != nil {
 		log.Fatalln("Txn failed", err)

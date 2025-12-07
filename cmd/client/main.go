@@ -25,7 +25,7 @@ func main() {
 	c := newClient()
 
 	runner := QueryRunner{conn: c, queryMap: queries}
-	resp, err := runner.getById("0x23aa7e")
+	resp, err := runner.getByLabel("synonym")
 
 	if err != nil {
 		log.Fatal(err)
