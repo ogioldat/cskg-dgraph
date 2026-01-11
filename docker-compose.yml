@@ -31,7 +31,7 @@ services:
           nocopy: true
       - ./schema/schema.dql:/schema.dql
       - ./data:/data
-      - ./bulk-load.sh:/bulk-load.sh
+      - ./scripts/bulk-load.sh:/bulk-load.sh
     depends_on:
       - zero
     command: 'bash /bulk-load.sh'

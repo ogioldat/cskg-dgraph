@@ -1,5 +1,5 @@
-query all($id: string, $first: int = 10000, $offset: int = 0) {
-  q(func: uid($id)) {
+query all($id: string, $first: int = 10000, $offset: int = 0, $uri: string) {
+  q(func: eq(uri, $uri)) {
     uid
     uri
     label
