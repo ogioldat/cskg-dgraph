@@ -24,6 +24,14 @@ services:
       - ../schema/schema.dql:/schema.dql:ro
     command: >-
       bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
+  
+  app:
+    build:
+      context: ..
+      dockerfile: ./ci/app.Dockerfile
+    working_dir: /app
+    entrypoint: ["/usr/local/bin/client"]
+    network_mode: host
 
 volumes:
   dgraph_data:
