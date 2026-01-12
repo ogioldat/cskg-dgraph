@@ -14,7 +14,7 @@ SCHEMA="/schema.dql"
 RDFFILE="/data/out/chunked"
 
 
-my_alpha=alpha-1:7080
+my_alpha=alpha:7080
 my_zero=zero:5080
 
 
@@ -80,7 +80,7 @@ echo "========================================="
 
    RUN_alpha () {
       echo "Dgraph Alpha Starting ..."
-      dgraph alpha --bindall=true --my=${my_alpha} --zero=${my_zero} -p ${my_alpha_p_0}
+      dgraph alpha --bindall=true --my=${my_alpha} --zero=${my_zero} -p ${my_alpha_p_0} --security "whitelist=192.168.65.1"
   }
 
    RUN_BulkLoader () {

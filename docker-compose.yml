@@ -16,9 +16,9 @@ services:
     restart: unless-stopped
     command: dgraph zero --bindall=true --my=zero:5080
 
-  alpha-1:
+  alpha:
     image: dgraph/dgraph:latest
-    container_name: dgraph-alpha-1
+    container_name: dgraph-alpha
     ports:
       - 8080:8080
       - 7080:7080
@@ -26,12 +26,13 @@ services:
     volumes:
       - type: volume
         target: /dgraph
-        source: dgraph-alpha-1
+        source: dgraph-alpha
         volume:
           nocopy: true
       - ./schema/schema.dql:/schema.dql
       - ./data:/data
       - ./scripts/bulk-load.sh:/bulk-load.sh
+      - ./data/backup:/backup
     depends_on:
       - zero
     command: 'bash /bulk-load.sh'
@@ -44,7 +45,7 @@ services:
 volumes:
   dgraph-alpha-2:
    driver: local
-  dgraph-alpha-1:
+  dgraph-alpha:
    driver: local
   dgraph-zero:
    driver: local

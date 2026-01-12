@@ -7,10 +7,10 @@
 Whenever we ran a query over Ratel that does not have any timeout restrictions ($\infty$ by default), such procedure caused the DB container to crash...
 
 ```log
-dgraph-zero      | E1129 19:02:08.876881       1 pool.go:303] CONN: Unable to connect with alpha-1:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
-dgraph-zero      | E1129 19:02:09.930873       1 pool.go:303] CONN: Unable to connect with alpha-1:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
-dgraph-zero      | E1129 19:02:10.993449       1 pool.go:303] CONN: Unable to connect with alpha-1:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
-dgraph-zero      | E1129 19:02:12.039417       1 pool.go:303] CONN: Unable to connect with alpha-1:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+dgraph-zero      | E1129 19:02:08.876881       1 pool.go:303] CONN: Unable to connect with alpha:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+dgraph-zero      | E1129 19:02:09.930873       1 pool.go:303] CONN: Unable to connect with alpha:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+dgraph-zero      | E1129 19:02:10.993449       1 pool.go:303] CONN: Unable to connect with alpha:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
+dgraph-zero      | E1129 19:02:12.039417       1 pool.go:303] CONN: Unable to connect with alpha:7080 : rpc error: code = Unavailable desc = name resolver error: produced zero addresses
 ```
 
 We had to recreate the environment.
