@@ -3,6 +3,8 @@ test-job:
   script:
     - cd ci
     - |
+      podman info
+      podman compose up dgraph-restore
       cat <<'RUN_TEST' > run-tests.sh
       #!/usr/bin/env bash
       set -euo pipefail
