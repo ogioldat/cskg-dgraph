@@ -4,18 +4,6 @@ stages:
   - setup
   - test
 
-variables:
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""
-  DOCKER_DRIVER: overlay2
-  COMPOSE_PROJECT_NAME: dgraph-ci
-
-default:
-  image: docker:24.0.6
-  services:
-    - name: docker:24.0.6-dind
-      alias: docker
-
 download-backup:
   stage: setup
   before_script:
@@ -58,14 +46,14 @@ test-job:
       set -euo pipefail
 
       cleanup() {
-        docker compose down -v || true
+        podman compose down -v || true
       }
       trap cleanup EXIT
 
-      docker compose version
-      docker compose build dgraph-client
-      docker compose up dgraph-restore
-      docker compose up -d dgraph dgraph-client
+      podman compose version
+      podman compose build dgraph-client
+      podman compose up dgraph-restore
+      podman compose up -d dgraph dgraph-client
 
       set +e
       ./scripts/test.sh > "output_${CI_PROJECT_NAME}.txt"
