@@ -6,14 +6,8 @@ stages:
 
 download-backup:
   stage: setup
-  before_script:
-    - cat /etc/os-release || uname -a
-    - |
-      dnf install -y bash python3 python3-pip coreutils
-    - pip3 install --no-cache-dir gdown
   script:
     - cd ci
-    - echo "Downloading backup"
     - ./scripts/download-backup.sh
   artifacts:
     paths:
