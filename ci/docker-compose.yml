@@ -24,14 +24,15 @@ services:
       - ../schema/schema.dql:/schema.dql:ro
     command: >-
       bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
-  
-  app:
+
+  dgraph-client:
+    container_name: dgraph-client
     build:
       context: ..
-      dockerfile: ./ci/app.Dockerfile
+      dockerfile: ./ci/client.Dockerfile
     working_dir: /app
-    entrypoint: ["/usr/local/bin/client"]
-    network_mode: host
+    network_mode: host 
+    command: ["sleep", "666h"]
 
 volumes:
   dgraph_data:

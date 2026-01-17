@@ -17,7 +17,7 @@ else
   else
     container_name=$container_id_or_name
   fi
-  output_file="./ci/logs/${timestamp_for_filename}-${container_name}.log"
+  output_file="./logs/${timestamp_for_filename}-${container_name}.log"
 fi
 
 output_dir=$(dirname "$output_file")

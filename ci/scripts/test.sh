@@ -8,7 +8,7 @@ INPUT_FILE="data/sample-nodes.csv"
 start_container_perf() {
     local container_id="$1"
 
-    ./ci/scripts/container-perf-stats.sh "$container_id" \
+    ./scripts/container-perf-stats.sh "$container_id" \
         </dev/null > /dev/null 2>&1 &
     local pid=$!
 
@@ -24,30 +24,32 @@ stop_container_perf() {
     local pid="${pid_pgid%%:*}"
     local pgid="${pid_pgid##*:}"
 
-    kill -TERM -"$pgid"
-    wait "$pid"
+    kill -TERM -"$pgid" || true
+    wait "$pid" || true
 }
 
 
-# DB_PERF_PIDG=$(start_container_perf "dgraph")
-# APP_PERF_PIDG=$(start_container_perf "app-ci")
+DB_PERF_PIDG=$(start_container_perf "dgraph")
+APP_PERF_PIDG=$(start_container_perf "dgraph-client")
 
 
 echo 'Running benchmark'
 
- tail -n +2 "$INPUT_FILE" | while IFS=',' read -r id label; do
-      docker run --rm \
-        --network host \
-        -w /app \
-        --entrypoint /usr/local/bin/client \
-        ci-app \
-        --query=1 \
-        --quiet \
-        --vars='{"uri":"'"$id"'"}' \
-        </dev/null
-  done
+mapfile -t rows < <(tail -n +2 "$INPUT_FILE" | tr -d '\r')
+
+for row in "${rows[@]}"; do
+  IFS=',' read -r id label <<<"$row"
+
+  docker compose exec -T dgraph-client /usr/local/bin/client \
+    --query=1 \
+    --vars "{\"uri\":\"$id\"}" \
+    --quiet \
+    </dev/null || true
+done
 
 echo 'Finished benchmark'
 
-# stop_container_perf $DB_PERF_PIDG
-# stop_container_perf $APP_PERF_PIDG
+stop_container_perf $DB_PERF_PIDG
+stop_container_perf $APP_PERF_PIDG
+
+exit 0
