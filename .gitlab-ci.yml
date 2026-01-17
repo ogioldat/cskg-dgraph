@@ -1,4 +1,5 @@
 test-job:
+  stage: test
   script:
     - cd ci
     - |
