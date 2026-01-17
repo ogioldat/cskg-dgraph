@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Downloading backup data from Google Drive..."
+echo "Downloading backup data"
 
 mkdir -p ./data/backup
 
