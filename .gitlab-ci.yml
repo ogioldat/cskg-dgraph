@@ -4,6 +4,7 @@ test-job:
     - cd ci
     - |
       podman info
+      podman run dgraph/standalone:latest
       podman compose up dgraph-restore
       cat <<'RUN_TEST' > run-tests.sh
       #!/usr/bin/env bash
