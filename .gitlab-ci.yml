@@ -4,8 +4,7 @@ test-job:
     - cd ci
     - |
       podman info
-      podman run docker.io/dgraph/standalone:latest
-      podman compose up dgraph-restore
+      podman compose up dgraph
       cat <<'RUN_TEST' > run-tests.sh
       #!/usr/bin/env bash
       set -euo pipefail
