@@ -38,7 +38,7 @@ echo 'Running benchmark'
 while IFS=',' read -r id label; do
   podman exec -it dgraph-client /usr/local/bin/client \
     --query=1 \
-    --vars "{\"uri\":\"$id\"}" \
+    --vars "{\"uri\":\"$id\"}"
     # --quiet \
     # </dev/null || true
 
