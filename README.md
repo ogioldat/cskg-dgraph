@@ -41,3 +41,23 @@ There are 6001531 records.
 ## Useful commands
 
 - `curl -X POST localhost:8080/alter -d '{"drop_all": true}'` Remove all data
+
+## Running the Dgraph stack
+
+The original multi-service Dgraph setup now runs inside a single container that leverages Docker-in-Docker. Bring up the stack with:
+
+```sh
+docker compose up dgraph-stack
+```
+
+This starts a `docker:24-dind` container that, in turn, launches the original `docker-compose.dgraph.yml` (zero, alpha and ratel). The container exposes the same ports as before, so existing clients can still talk to `5080`, `6080`, `7080`, `8080`, `9080` and `8000`.
+
+## Benchmark
+
+Queries: 1,17
+
+Requirements
+
+<img src="./img/lBtKDAMH.jpg">
+<img src="./img/e0f9Au9o.jpg">
+<img src="./img/41TlG4zF.jpg">

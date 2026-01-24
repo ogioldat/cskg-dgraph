@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   dgraph-restore:
-    image: dgraph/standalone:latest
+    image: docker.io/dgraph/standalone:latest
     container_name: dgraph-restore
     volumes:
       - dgraph_data:/dgraph
@@ -12,7 +12,7 @@ services:
       dgraph restore --location /backup --force_zero=false --postings /dgraph
 
   dgraph:
-    image: dgraph/standalone:latest
+    image: docker.io/dgraph/standalone:latest
     container_name: dgraph
     depends_on: 
       - dgraph-restore

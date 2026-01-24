@@ -4,17 +4,7 @@ test-job:
     - cd ci
     - |
       podman info
-      podman compose up dgraph
-      cat <<'RUN_TEST' > run-tests.sh
-      #!/usr/bin/env bash
-      set -euo pipefail
 
-      cleanup() {
-        podman compose down -v || true
-      }
-      trap cleanup EXIT
-
-      echo "Downloading backup"
       ./scripts/download-backup.sh
 
       podman compose version
