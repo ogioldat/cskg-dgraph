@@ -5,7 +5,7 @@ test-job:
     - |
       podman info
 
-      ./scripts/download-backup.sh
+      # ./scripts/download-backup.sh
 
       podman run --rm \
         --name dgraph-restore \
