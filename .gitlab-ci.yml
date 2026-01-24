@@ -19,7 +19,7 @@ test-job:
 
       podman run --rm \
         --name dgraph-restore \
-        -v dgraph_data:/dgraph \
+        -v dgraph_data:/dgraph:amd64 \
         -v $(pwd)/data/backup:/backup:Z \
         "$DGRAPH_RESTORE_IMAGE" \
         dgraph restore \
@@ -31,13 +31,13 @@ test-job:
         --name dgraph \
         -p 8080:8080 \
         -p 9080:9080 \
-        -v dgraph_data:/dgraph \
+        -v dgraph_data:/dgraph:amd64 \
         -v $(pwd)/../schema/schema.dql:/schema.dql:ro,Z \
         "$DGRAPH_IMAGE" \
         bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
 
       podman run -d \
-        --name dgraph-client \
+        --name dgraph-client:amd64 \
         --network host \
         -w /app \
         "$DGRAPH_CLIENT_IMAGE" \
