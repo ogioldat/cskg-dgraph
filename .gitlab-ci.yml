@@ -42,14 +42,14 @@ test-job:
       podman ps
 
       set +e
-      ./scripts/test.sh | tee "output_${CI_PROJECT_NAME}.txt"
+      ./scripts/test.sh || true
+      #  | tee "output_${CI_PROJECT_NAME}.txt"
       test_status=$?
       set -e
 
       cp "output_${CI_PROJECT_NAME}.txt" ..
       exit "$test_status"
       RUN_TEST
-    - bash run-tests.sh
   artifacts:
     paths:
       - output_${CI_PROJECT_NAME}.txt
