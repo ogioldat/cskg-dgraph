@@ -7,10 +7,10 @@ test-job:
 
       ./scripts/download-backup.sh
 
-      podman compose version
-      podman compose up dgraph-restore
-      podman compose build dgraph-client
-      podman compose up -d dgraph dgraph-client
+      podman-compose version
+      podman-compose up dgraph-restore
+      podman-compose build dgraph-client
+      podman-compose up -d dgraph dgraph-client
 
       set +e
       ./scripts/test.sh > "output_${CI_PROJECT_NAME}.txt"
