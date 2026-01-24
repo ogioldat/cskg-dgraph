@@ -35,27 +35,23 @@ APP_PERF_PIDG=$(start_container_perf "dgraph-client")
 
 echo 'Running benchmark'
 
-mapfile -t rows < <(tail -n +2 "$INPUT_FILE" | tr -d '\r')
-
-for row in "${rows[@]}"; do
-  IFS=',' read -r id label <<<"$row"
-
-  docker compose exec -T dgraph-client /usr/local/bin/client \
+while IFS=',' read -r id label; do
+  podman exec -it dgraph-client /usr/local/bin/client \
     --query=1 \
     --vars "{\"uri\":\"$id\"}" \
     --quiet \
     </dev/null || true
 
-  docker compose exec -T dgraph-client /usr/local/bin/client \
-    --query=17 \
-    --vars "{\"uri\":\"$id\"}" \
-    --quiet \
-    </dev/null || true
-done
+#   podman compose -it dgraph-client /usr/local/bin/client \
+#     --query=17 \
+#     --vars "{\"uri\":\"$id\"}" \
+#     --quiet \
+#     </dev/null || true
+done < <(tail -n +2 "$INPUT_FILE" | tr -d '\r')
 
 echo 'Finished benchmark'
 
 stop_container_perf $DB_PERF_PIDG
-stop_container_perf $APP_PERF_PIDG
+stop_container_perf $APP_PERF_PIDG 
 
 exit 0
