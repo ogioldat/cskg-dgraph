@@ -42,7 +42,7 @@ test-job:
       podman ps
 
       set +e
-      ./scripts/test.sh > "output_${CI_PROJECT_NAME}.txt"
+      ./scripts/test.sh | tee "output_${CI_PROJECT_NAME}.txt"
       test_status=$?
       set -e
 
