@@ -3,19 +3,17 @@ test-job:
   script:
     - cd ci
     - |
-      podman info
+      # ./scripts/download-backup.sh
 
-      ./scripts/download-backup.sh
-
-      podman run --rm --replace \
-        --name dgraph-restore \
-        -v dgraph_data:/dgraph \
-        -v $(pwd)/data/backup:/backup:Z \
-        docker.io/dgraph/standalone:latest \
-        dgraph restore \
-          --location /backup \
-          --force_zero=false \
-          --postings /dgraph
+      # podman run --rm --replace \
+      #   --name dgraph-restore \
+      #   -v dgraph_data:/dgraph \
+      #   -v $(pwd)/data/backup:/backup:Z \
+      #   docker.io/dgraph/standalone:latest \
+      #   dgraph restore \
+      #     --location /backup \
+      #     --force_zero=false \
+      #     --postings /dgraph
 
       podman run -d --replace \
         --name dgraph \
