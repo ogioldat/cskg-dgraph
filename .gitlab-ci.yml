@@ -20,11 +20,17 @@ test-job:
         -p 8080:8080 \
         -p 9080:9080 \
         -v dgraph_data:/dgraph \
-        -v $(pwd)/../schema/schema.dql:/schema.dql:ro,Z \
+        -v $(pwd)/../schema/schema.dql:/schema.dql:ro \
         docker.io/dgraph/standalone:latest \
         bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
 
       podman ps
+
+      podman build \
+        --platform=linux/amd64 \
+        -t dgraph-client \
+        -f client.Dockerfile \
+        ..
 
       podman run -d --replace \
         --name dgraph-client \
