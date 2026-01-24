@@ -36,11 +36,12 @@ APP_PERF_PIDG=$(start_container_perf "dgraph-client")
 echo 'Running benchmark'
 
 while IFS=',' read -r id label; do
-  podman exec -it dgraph-client /usr/local/bin/client \
+  # Feed the client from /dev/null so it does not consume the CSV stream.
+  podman exec dgraph-client /usr/local/bin/client \
     --query=1 \
-    --vars "{\"uri\":\"$id\"}"
-    # --quiet \
-    # </dev/null || true
+    --vars "{\"uri\":\"$id\"}" \
+    --quiet \
+    </dev/null || true
 
 #   podman compose -it dgraph-client /usr/local/bin/client \
 #     --query=17 \
