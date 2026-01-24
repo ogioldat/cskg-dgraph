@@ -5,11 +5,7 @@ test-job:
     - |
       podman info
 
-      if [ -z "${DOCKER_HUB_NAMESPACE:-}" ]; then
-        echo "DOCKER_HUB_NAMESPACE env variable must be set to point to your Docker Hub namespace." >&2
-        exit 1
-      fi
-
+      DOCKER_HUB_NAMESPACE="ogioldat"
       DOCKER_IMAGE_TAG="${DOCKER_IMAGE_TAG:-latest}"
       DGRAPH_RESTORE_IMAGE="docker.io/${DOCKER_HUB_NAMESPACE}/dgraph-restore:${DOCKER_IMAGE_TAG}"
       DGRAPH_IMAGE="docker.io/${DOCKER_HUB_NAMESPACE}/dgraph:${DOCKER_IMAGE_TAG}"
