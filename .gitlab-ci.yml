@@ -7,10 +7,36 @@ test-job:
 
       ./scripts/download-backup.sh
 
-      podman compose version
-      podman compose up dgraph-restore
-      podman compose build dgraph-client
-      podman compose up -d dgraph dgraph-client
+      podman run --rm \
+        --name dgraph-restore \
+        -v dgraph_data:/dgraph \
+        -v $(pwd)/data/backup:/backup:Z \
+        docker.io/dgraph/standalone:latest \
+        dgraph restore \
+          --location /backup \
+          --force_zero=false \
+          --postings /dgraph
+
+      podman run -d \
+        --name dgraph \
+        -p 8080:8080 \
+        -p 9080:9080 \
+        -v dgraph_data:/dgraph \
+        -v $(pwd)/../schema/schema.dql:/schema.dql:ro,Z \
+        docker.io/dgraph/standalone:latest \
+        bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
+
+      podman build \
+        -f ./ci/client.Dockerfile \
+        -t dgraph-client \
+        ..
+
+      podman run -d \
+        --name dgraph-client \
+        --network host \
+        -w /app \
+        dgraph-client \
+        sleep 666h
 
       set +e
       ./scripts/test.sh > "output_${CI_PROJECT_NAME}.txt"
