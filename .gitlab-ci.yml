@@ -5,23 +5,13 @@ test-job:
     - |
       podman info
 
-      DOCKER_HUB_NAMESPACE="ogioldat"
-      DOCKER_IMAGE_TAG="${DOCKER_IMAGE_TAG:-latest}"
-      DGRAPH_RESTORE_IMAGE="docker.io/${DOCKER_HUB_NAMESPACE}/dgraph-restore:${DOCKER_IMAGE_TAG}"
-      DGRAPH_IMAGE="docker.io/${DOCKER_HUB_NAMESPACE}/dgraph:${DOCKER_IMAGE_TAG}"
-      DGRAPH_CLIENT_IMAGE="docker.io/${DOCKER_HUB_NAMESPACE}/dgraph-client:${DOCKER_IMAGE_TAG}"
-
       ./scripts/download-backup.sh
-
-      podman pull "$DGRAPH_RESTORE_IMAGE"
-      podman pull "$DGRAPH_IMAGE"
-      podman pull "$DGRAPH_CLIENT_IMAGE"
 
       podman run --rm \
         --name dgraph-restore \
-        -v dgraph_data:/dgraph:amd64 \
+        -v dgraph_data:/dgraph \
         -v $(pwd)/data/backup:/backup:Z \
-        "$DGRAPH_RESTORE_IMAGE" \
+        docker.io/dgraph/standalone:latest \
         dgraph restore \
           --location /backup \
           --force_zero=false \
@@ -31,16 +21,21 @@ test-job:
         --name dgraph \
         -p 8080:8080 \
         -p 9080:9080 \
-        -v dgraph_data:/dgraph:amd64 \
+        -v dgraph_data:/dgraph \
         -v $(pwd)/../schema/schema.dql:/schema.dql:ro,Z \
-        "$DGRAPH_IMAGE" \
+        docker.io/dgraph/standalone:latest \
         bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
 
+      podman build \
+        -f ./ci/client.Dockerfile \
+        -t dgraph-client \
+        ..
+
       podman run -d \
-        --name dgraph-client:amd64 \
+        --name dgraph-client \
         --network host \
         -w /app \
-        "$DGRAPH_CLIENT_IMAGE" \
+        dgraph-client \
         sleep 666h
 
       set +e
