@@ -7,7 +7,7 @@ test-job:
 
       # ./scripts/download-backup.sh
 
-      podman run --rm \
+      podman run --rm --replace \
         --name dgraph-restore \
         -v dgraph_data:/dgraph \
         -v $(pwd)/data/backup:/backup:Z \
@@ -17,7 +17,7 @@ test-job:
           --force_zero=false \
           --postings /dgraph
 
-      podman run -d \
+      podman run -d --replace \
         --name dgraph \
         -p 8080:8080 \
         -p 9080:9080 \
@@ -25,11 +25,6 @@ test-job:
         -v $(pwd)/../schema/schema.dql:/schema.dql:ro,Z \
         docker.io/dgraph/standalone:latest \
         bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
-
-      podman build \
-        -f ./ci/client.Dockerfile \
-        -t dgraph-client \
-        ..
 
       podman run -d \
         --name dgraph-client \
