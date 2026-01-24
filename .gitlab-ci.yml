@@ -24,12 +24,16 @@ test-job:
         docker.io/dgraph/standalone:latest \
         bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
 
-      podman run -d \
+      podman ps
+
+      podman run -d --replace \
         --name dgraph-client \
         --network host \
         -w /app \
         dgraph-client \
         sleep 666h
+
+      podman ps
 
       set +e
       ./scripts/test.sh > "output_${CI_PROJECT_NAME}.txt"
