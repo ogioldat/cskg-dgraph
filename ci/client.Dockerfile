@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY cmd ./cmd
 COPY gql ./gql
-COPY data/sample-nodes.csv ./sample-nodes.csv
+COPY ./data/sample-nodes.csv ./sample-nodes.csv
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/client ./cmd/client
 
