@@ -45,6 +45,12 @@ for row in "${rows[@]}"; do
     --vars "{\"uri\":\"$id\"}" \
     --quiet \
     </dev/null || true
+
+  docker compose exec -T dgraph-client /usr/local/bin/client \
+    --query=17 \
+    --vars "{\"uri\":\"$id\"}" \
+    --quiet \
+    </dev/null || true
 done
 
 echo 'Finished benchmark'
