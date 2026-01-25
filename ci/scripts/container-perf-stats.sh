@@ -13,7 +13,7 @@ echo $container_id_or_name
 if [[ $# -eq 2 ]]; then
   output_file=$2
 else
-  if container_name=$(docker inspect --format '{{.Name}}' "$container_id_or_name" 2>/dev/null); then
+  if container_name=$(podman inspect --format '{{.Name}}' "$container_id_or_name" 2>/dev/null); then
     container_name=${container_name#/}
   else
     container_name=$container_id_or_name
@@ -46,7 +46,7 @@ ensure_header
 format='{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}'
 
 echo running stats for $container_id_or_name
-docker stats "$container_id_or_name" --format "$format" |
+podman stats "$container_id_or_name" --format "$format" |
 while IFS= read -r stats_line; do
   timestamp=$(date -Iseconds)
 

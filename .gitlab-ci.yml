@@ -45,7 +45,6 @@ test-job:
 
       set +e
       ./scripts/test.sh || true
-      #  | tee "output_${CI_PROJECT_NAME}.txt"
   artifacts:
     when: always
     paths:
