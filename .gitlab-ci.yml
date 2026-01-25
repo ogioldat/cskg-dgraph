@@ -44,7 +44,7 @@ test-job:
       podman ps
 
       set +e
-      ./scripts/test.sh || true
+      ./scripts/test.sh 5 || true
   artifacts:
     when: always
     paths:
