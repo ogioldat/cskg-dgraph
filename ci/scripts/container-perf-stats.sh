@@ -13,27 +13,40 @@ echo $container_id_or_name
 if [[ $# -eq 2 ]]; then
   output_file=$2
 else
-  timestamp_for_filename=$(date +%Y%m%dT%H%M%S)
-  if container_name=$(podman inspect --format '{{.Name}}' "$container_id_or_name" 2>/dev/null); then
+  if container_name=$(docker inspect --format '{{.Name}}' "$container_id_or_name" 2>/dev/null); then
     container_name=${container_name#/}
   else
     container_name=$container_id_or_name
   fi
-  output_file="./logs/${timestamp_for_filename}-${container_name}.log"
+  output_file="./logs/${container_name}.log"
 fi
 
 output_dir=$(dirname "$output_file")
 mkdir -p "$output_dir"
 
 header="timestamp,container_id,name,cpu_percent,mem_usage,mem_limit,mem_percent,net_io_rx,net_io_tx,block_io_read,block_io_write,pids"
-if [[ ! -s "$output_file" ]]; then
-  echo "$header" >>"$output_file"
-fi
+ensure_header() {
+  if [[ ! -f "$output_file" || ! -s "$output_file" ]]; then
+    echo "$header">>"$output_file"
+    return
+  fi
+
+  if ! head -n 1 "$output_file" | grep -Fxq "$header"; then
+    tmp_file=$(mktemp)
+    {
+      echo "$header"
+      cat "$output_file"
+    } >"$tmp_file"
+    mv "$tmp_file" "$output_file"
+  fi
+}
+
+ensure_header
 
 format='{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}'
 
 echo running stats for $container_id_or_name
-podman stats "$container_id_or_name" --format "$format" |
+docker stats "$container_id_or_name" --format "$format" |
 while IFS= read -r stats_line; do
   timestamp=$(date -Iseconds)
 

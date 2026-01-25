@@ -19,14 +19,14 @@ func FindDistantAntonyms(runner QueryRunner, start string, wanted int, maxDepth 
 
 func findRelated(runner QueryRunner, start string, wanted int, maxDepth int, targetSign int) []string {
 	cache := make(map[string][]RelResponse)
-	visited := make(map[string]bool)
+	// visited := make(map[string]bool)
 	resultSet := make(map[string]struct{})
 
-	visited[start] = true
+	// visited[start] = true
 
 	currLayer := []State{{uid: start, sign: 1}}
 
-	const batchSize = 50
+	const batchSize = 100
 
 	for depth := 0; depth <= maxDepth; depth++ {
 		if len(currLayer) == 0 {
@@ -95,9 +95,9 @@ func findRelated(runner QueryRunner, start string, wanted int, maxDepth int, tar
 					continue
 				}
 
-				if visited[e.Uid] {
-					continue
-				}
+				// if visited[e.Uid] {
+				// 	continue
+				// }
 
 				nextSign := s.sign
 				if e.RelationLabel == "antonym" {
@@ -107,7 +107,7 @@ func findRelated(runner QueryRunner, start string, wanted int, maxDepth int, tar
 				nextState := State{uid: e.Uid, sign: nextSign}
 
 				if !nextLayerMap[nextState] {
-					visited[e.Uid] = true
+					// visited[e.Uid] = true
 					nextLayerMap[nextState] = true
 					nextLayer = append(nextLayer, nextState)
 				}

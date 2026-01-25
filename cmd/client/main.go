@@ -49,6 +49,20 @@ func main() {
 	txn := client.NewTxn()
 	defer txn.Discard(context.Background())
 
+	if queryNumber == "17" {
+		log.Println("QUERY 17")
+		runner := QueryRunner{conn: client, queryMap: queries}
+		nodes, err := runner.getByLabel("slang")
+
+		if err != nil {
+			log.Fatalf("Failed task 17", err)
+		}
+		targetNodeId := nodes[0].Uid
+
+		FindDistantSynonyms(runner, targetNodeId, 3, 3)
+		return
+	}
+
 	resp, err := txn.QueryWithVars(context.Background(), query, vars)
 	if err != nil {
 		log.Fatalf("Query execution failed: %v", err)

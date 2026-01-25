@@ -2,8 +2,11 @@ version: '3.8'
 
 services:
   dgraph-restore:
-    image: docker.io/dgraph/standalone:latest
+    image: ${DOCKER_HUB_NAMESPACE:-local}/dgraph-restore:${DOCKER_IMAGE_TAG:-latest}
     container_name: dgraph-restore
+    build:
+      context: .
+      dockerfile: ./dgraph-standalone.Dockerfile
     volumes:
       - dgraph_data:/dgraph
       - ./data/backup:/backup
@@ -12,8 +15,11 @@ services:
       dgraph restore --location /backup --force_zero=false --postings /dgraph
 
   dgraph:
-    image: docker.io/dgraph/standalone:latest
+    image: ${DOCKER_HUB_NAMESPACE:-local}/dgraph:${DOCKER_IMAGE_TAG:-latest}
     container_name: dgraph
+    build:
+      context: .
+      dockerfile: ./dgraph-standalone.Dockerfile
     depends_on: 
       - dgraph-restore
     ports:
@@ -27,6 +33,7 @@ services:
 
   dgraph-client:
     container_name: dgraph-client
+    image: ${DOCKER_HUB_NAMESPACE:-local}/dgraph-client:${DOCKER_IMAGE_TAG:-latest}
     build:
       context: ..
       dockerfile: ./ci/client.Dockerfile
