@@ -68,7 +68,7 @@ run_iteration() {
     while IFS=',' read -r id label; do
       counter=$((counter + 1))
       log "Iteration $iteration: #$counter Starting query 1 for id='$id' label='$label'"
-      podman exec -T dgraph-client /usr/local/bin/client \
+      podman exec dgraph-client /usr/local/bin/client \
         --query=1 \
         --vars "{\"uri\":\"$id\"}" \
         --quiet \
@@ -79,7 +79,7 @@ run_iteration() {
     log "Iteration $iteration: Starting query 10"
     echo "TASK 10 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 10 (iteration $iteration)" >> logs/dgraph.log
-    podman exec -T dgraph-client /usr/local/bin/client \
+    podman exec dgraph-client /usr/local/bin/client \
       --query=10 \
       --quiet \
       </dev/null || true
@@ -87,14 +87,14 @@ run_iteration() {
     log "Iteration $iteration: Starting query 9"
     echo "TASK 9 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 9 (iteration $iteration)" >> logs/dgraph.log
-    podman exec -T dgraph-client /usr/local/bin/client \
+    podman exec dgraph-client /usr/local/bin/client \
         --query=9 \
         </dev/null || true
 
     log "Iteration $iteration: Starting query 17"
     echo "TASK 17 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 17 (iteration $iteration)" >> logs/dgraph.log
-    podman exec -T dgraph-client /usr/local/bin/client \
+    podman exec dgraph-client /usr/local/bin/client \
         --query=17 \
         --vars "{\"uri\":\"/c/en/slang\"}" \
         --quiet \
@@ -103,7 +103,7 @@ run_iteration() {
     log "Iteration $iteration: Starting query 12"
     echo "TASK 12 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 12 (iteration $iteration)" >> logs/dgraph.log
-    podman exec -T dgraph-client /usr/local/bin/client \
+    podman exec dgraph-client /usr/local/bin/client \
         --query=12 \
         --vars "{\"uri\":\"$id\"}" \
         --quiet \
