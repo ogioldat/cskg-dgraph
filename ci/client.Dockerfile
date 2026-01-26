@@ -5,9 +5,11 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 
+RUN ls -la
+
 COPY cmd ./cmd
 COPY gql ./gql
-COPY data/sample-nodes.csv ./sample-nodes.csv
+COPY ci/data/sample-nodes.csv ./sample-nodes.csv
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/client ./cmd/client
 

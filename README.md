@@ -19,6 +19,7 @@ The system consists of three main containerized components:
 
 ## 3. Data Overview
 
+<<<<<<< HEAD
 The dataset is the **Common Sense Knowledge Graph (CSKG)**.
 
 * **Records:** ~6,001,531 edges.

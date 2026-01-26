@@ -20,7 +20,6 @@ func NewClient() *dgo.Dgraph {
 		),
 	)
 	if err != nil {
-		client.Close()
 		log.Fatal(err)
 	}
 
