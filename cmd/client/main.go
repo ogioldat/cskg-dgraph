@@ -11,17 +11,17 @@ import (
 )
 
 func main() {
-	queryArg := flag.String("query", "", "Query number defined in semanticNames")
 	quietArg := flag.Bool("quiet", false, "No write to standard output")
 	variablesArg := flag.String("vars", "", "GraphQL variables as a JSON object, e.g. '{\"id\":\"0x123\"}'")
 	flag.Parse()
 
-	if *queryArg == "" {
-		fmt.Println("Usage: client --query=<query-number> [--vars='{\"id\":\"0x123\"}']")
+	positionalArgs := flag.Args()
+	if len(positionalArgs) == 0 {
+		fmt.Println("Usage: client <query-number> [--vars='{\"id\":\"0x123\"}']")
 		os.Exit(1)
 	}
 
-	queryNumber := *queryArg
+	queryNumber := positionalArgs[0]
 
 	queryKey, ok := semanticNames[queryNumber]
 	if !ok {
@@ -48,6 +48,23 @@ func main() {
 
 	txn := client.NewTxn()
 	defer txn.Discard(context.Background())
+
+	if queryNumber == "17" {
+		log.Println("QUERY 17")
+		runner := QueryRunner{conn: client, queryMap: queries}
+		nodes, err := runner.getByLabel("slang")
+
+		if err != nil {
+			log.Fatalf("Failed task 17", err)
+		}
+		targetNodeId := nodes[0].Uid
+
+		n := FindDistantSynonyms(runner, targetNodeId, 3, 3)
+		if !*quietArg {
+			fmt.Println("Found nodes", len(n))
+		}
+		return
+	}
 
 	resp, err := txn.QueryWithVars(context.Background(), query, vars)
 	if err != nil {

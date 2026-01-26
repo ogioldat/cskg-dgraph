@@ -31,6 +31,7 @@ const (
 	Q17FindDistantSynonyms     QueryKey = "Q17FindDistantSynonyms"
 	Q18FindDistantAntonyms     QueryKey = "Q18FindDistantAntonyms"
 	Q19CustomGetByLabels       QueryKey = "Q19CustomGetByLabels"
+	Q20CustomGetByIds          QueryKey = "Q20CustomGetByIds"
 )
 
 var semanticNames = map[string]QueryKey{
@@ -52,6 +53,7 @@ var semanticNames = map[string]QueryKey{
 	"17": Q17FindDistantSynonyms,
 	"18": Q18FindDistantAntonyms,
 	"19": Q19CustomGetByLabels,
+	"20": Q20CustomGetByIds,
 }
 
 func LoadQueries() (QueryMap, error) {

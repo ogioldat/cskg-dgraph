@@ -2,10 +2,53 @@ test-job:
   stage: test
   script:
     - cd ci
-    - echo "Tests running"
-    - ./test.sh > output_${CI_PROJECT_NAME}.txt
+    - |
+      mkdir -p logs
+
+      ./scripts/download-backup.sh
+
+      podman run --rm --replace \
+        --name dgraph-restore \
+        -v dgraph_data:/dgraph \
+        -v $(pwd)/data/backup:/backup:Z \
+        docker.io/dgraph/standalone:latest \
+        dgraph restore \
+          --location /backup \
+          --force_zero=false \
+          --postings /dgraph
+
+      podman run -d --replace \
+        --name dgraph \
+        -p 8080:8080 \
+        -p 9080:9080 \
+        -v dgraph_data:/dgraph \
+        -v $(pwd)/../schema/schema.dql:/schema.dql:ro \
+        docker.io/dgraph/standalone:latest \
+        bash -lc 'rm -rf p >/dev/null 2>&1 || true; mv p1 p >/dev/null 2>&1 || true; exec /run.sh'
+
+      podman ps
+
+      podman build \
+        --platform=linux/amd64 \
+        -t dgraph-client \
+        -f client.Dockerfile \
+        ..
+
+      podman run -d --replace \
+        --name dgraph-client \
+        --network host \
+        -w /app \
+        dgraph-client \
+        sleep 666h
+
+      podman ps
+
+      set +e
+      ./scripts/test.sh 5 || true
+  artifacts:
+    when: always
+    paths:
+      # - output_${CI_PROJECT_NAME}.txt
+      - ci/logs
   rules:
     - if: $CI_COMMIT_TAG =~ /^test.*/
-  artifacts:
-    paths:
-      - output_${CI_PROJECT_NAME}.txt

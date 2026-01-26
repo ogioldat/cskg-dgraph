@@ -1,7 +1,7 @@
 GO ?= go
 BIN_DIR := bin
 CLIENT_PKG := ./cmd/client
-CLIENT_BIN := $(BIN_DIR)/client
+CLIENT_BIN := $(BIN_DIR)/dbcli
 
 .PHONY: all client clean
 

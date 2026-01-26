@@ -8,41 +8,69 @@ fi
 
 container_id_or_name=$1
 
+echo $container_id_or_name
+
 if [[ $# -eq 2 ]]; then
   output_file=$2
 else
-  timestamp_for_filename=$(date +%Y%m%dT%H%M%S)
-  if container_name=$(docker inspect --format '{{.Name}}' "$container_id_or_name" 2>/dev/null); then
+  if container_name=$(podman inspect --format '{{.Name}}' "$container_id_or_name" 2>/dev/null); then
     container_name=${container_name#/}
   else
     container_name=$container_id_or_name
   fi
-  output_file="./logs/${timestamp_for_filename}-${container_name}.log"
+  output_file="./logs/${container_name}.log"
 fi
 
 output_dir=$(dirname "$output_file")
 mkdir -p "$output_dir"
 
 header="timestamp,container_id,name,cpu_percent,mem_usage,mem_limit,mem_percent,net_io_rx,net_io_tx,block_io_read,block_io_write,pids"
-if [[ ! -s "$output_file" ]]; then
-  echo "$header" >>"$output_file"
+ensure_header() {
+  if [[ ! -f "$output_file" || ! -s "$output_file" ]]; then
+    echo "$header">>"$output_file"
+    return
+  fi
+
+  if ! head -n 1 "$output_file" | grep -Fxq "$header"; then
+    tmp_file=$(mktemp)
+    {
+      echo "$header"
+      cat "$output_file"
+    } >"$tmp_file"
+    mv "$tmp_file" "$output_file"
+  fi
+}
+
+ensure_header
+
+format='{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}'
+
+sample_interval="${PERF_SAMPLE_INTERVAL:-1}"
+if [[ ! "$sample_interval" =~ ^[0-9]*\.?[0-9]+$ ]] || \
+   ! awk -v v="$sample_interval" 'BEGIN{exit(v>0?0:1)}' >/dev/null; then
+  echo "PERF_SAMPLE_INTERVAL must be a positive number (received '$sample_interval')" >&2
+  exit 1
 fi
+sample_interval_ns=$(awk -v v="$sample_interval" 'BEGIN{printf "%.0f", v*1000000000}')
 
-format='{{.Container}},{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}'
+echo running stats for $container_id_or_name
 
-docker stats "$container_id_or_name" --format "$format" |
-while IFS= read -r stats_line; do
+trim_split() {
+  local raw_value="$1"
+  local part_index="$2"
+  echo "$raw_value" | awk -F'/' -v idx="$part_index" '{gsub(/^[ \t]+|[ \t]+$/, "", $idx); print $idx}' | sed 's/\x1b\[[0-9;]*[A-Za-z]//g'
+}
+
+while true; do
+  loop_start_ns=$(date +%s%N)
+  if ! stats_line=$(podman stats "$container_id_or_name" --format "$format" --no-stream 2>/dev/null); then
+    sleep "$sample_interval"
+    continue
+  fi
+
   timestamp=$(date -Iseconds)
+  IFS=',' read -r name cpu_percent mem_usage_raw mem_percent net_io_raw block_io_raw pids <<<"$stats_line"
 
-  IFS=',' read -r container_id name cpu_percent mem_usage_raw mem_percent net_io_raw block_io_raw pids <<<"$stats_line"
-
-  trim_split() {
-    local raw_value="$1"
-    local part_index="$2"
-    echo "$raw_value" | awk -F'/' -v idx="$part_index" '{gsub(/^[ \t]+|[ \t]+$/, "", $idx); print $idx}' | sed 's/\x1b\[[0-9;]*[A-Za-z]//g'
-  }
-
-  container_id=$(trim_split "$container_id" 1)
   name=$(trim_split "$name" 1)
   mem_usage=$(trim_split "$mem_usage_raw" 1)
   mem_limit=$(trim_split "$mem_usage_raw" 2)
@@ -51,5 +79,13 @@ while IFS= read -r stats_line; do
   block_io_read=$(trim_split "$block_io_raw" 1)
   block_io_write=$(trim_split "$block_io_raw" 2)
 
-  echo "$timestamp,$container_id,$name,$cpu_percent,$mem_usage,$mem_limit,$mem_percent,$net_io_rx,$net_io_tx,$block_io_read,$block_io_write,$pids" >>"$output_file"
+  echo "$timestamp,$name,$cpu_percent,$mem_usage,$mem_limit,$mem_percent,$net_io_rx,$net_io_tx,$block_io_read,$block_io_write,$pids" >>"$output_file"
+
+  loop_end_ns=$(date +%s%N)
+  elapsed_ns=$((loop_end_ns - loop_start_ns))
+  if ((elapsed_ns < sample_interval_ns)); then
+    remaining_ns=$((sample_interval_ns - elapsed_ns))
+    sleep_seconds=$(awk -v ns="$remaining_ns" 'BEGIN{printf "%.9f", ns/1000000000}')
+    sleep "$sleep_seconds"
+  fi
 done

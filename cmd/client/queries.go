@@ -43,7 +43,7 @@ func (q *QueryRunner) getByIds(ids []string, first int, offset int) ([]ConceptRe
 	txn := q.conn.NewTxn()
 	defer txn.Discard(context.Background())
 
-	query := q.queryMap[Q01AllByIDs]
+	query := q.queryMap[Q20CustomGetByIds]
 
 	vars := map[string]string{
 		"$id":     "[" + strings.Join(ids, ",") + "]",
