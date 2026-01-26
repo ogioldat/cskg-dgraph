@@ -10,7 +10,7 @@ test-job:
       podman run --rm --replace \
         --name dgraph-restore \
         -v dgraph_data:/dgraph \
-        -v $(pwd)/data/backup:/backup \
+        -v $(pwd)/data/backup:/backup:Z \
         docker.io/dgraph/standalone:latest \
         dgraph restore \
           --location /backup \
