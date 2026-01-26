@@ -45,18 +45,31 @@ ensure_header
 
 format='{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}'
 
+sample_interval="${PERF_SAMPLE_INTERVAL:-1}"
+if [[ ! "$sample_interval" =~ ^[0-9]*\.?[0-9]+$ ]] || \
+   ! awk -v v="$sample_interval" 'BEGIN{exit(v>0?0:1)}' >/dev/null; then
+  echo "PERF_SAMPLE_INTERVAL must be a positive number (received '$sample_interval')" >&2
+  exit 1
+fi
+sample_interval_ns=$(awk -v v="$sample_interval" 'BEGIN{printf "%.0f", v*1000000000}')
+
 echo running stats for $container_id_or_name
-podman stats "$container_id_or_name" --format "$format" |
-while IFS= read -r stats_line; do
+
+trim_split() {
+  local raw_value="$1"
+  local part_index="$2"
+  echo "$raw_value" | awk -F'/' -v idx="$part_index" '{gsub(/^[ \t]+|[ \t]+$/, "", $idx); print $idx}' | sed 's/\x1b\[[0-9;]*[A-Za-z]//g'
+}
+
+while true; do
+  loop_start_ns=$(date +%s%N)
+  if ! stats_line=$(podman stats "$container_id_or_name" --format "$format" --no-stream 2>/dev/null); then
+    sleep "$sample_interval"
+    continue
+  fi
+
   timestamp=$(date -Iseconds)
-
   IFS=',' read -r name cpu_percent mem_usage_raw mem_percent net_io_raw block_io_raw pids <<<"$stats_line"
-
-  trim_split() {
-    local raw_value="$1"
-    local part_index="$2"
-    echo "$raw_value" | awk -F'/' -v idx="$part_index" '{gsub(/^[ \t]+|[ \t]+$/, "", $idx); print $idx}' | sed 's/\x1b\[[0-9;]*[A-Za-z]//g'
-  }
 
   name=$(trim_split "$name" 1)
   mem_usage=$(trim_split "$mem_usage_raw" 1)
@@ -67,4 +80,12 @@ while IFS= read -r stats_line; do
   block_io_write=$(trim_split "$block_io_raw" 2)
 
   echo "$timestamp,$name,$cpu_percent,$mem_usage,$mem_limit,$mem_percent,$net_io_rx,$net_io_tx,$block_io_read,$block_io_write,$pids" >>"$output_file"
+
+  loop_end_ns=$(date +%s%N)
+  elapsed_ns=$((loop_end_ns - loop_start_ns))
+  if ((elapsed_ns < sample_interval_ns)); then
+    remaining_ns=$((sample_interval_ns - elapsed_ns))
+    sleep_seconds=$(awk -v ns="$remaining_ns" 'BEGIN{printf "%.9f", ns/1000000000}')
+    sleep "$sleep_seconds"
+  fi
 done

@@ -57,6 +57,9 @@ log 'Running benchmark'
 echo PIDG $DB_PERF_PIDG
 echo PIDG $APP_PERF_PIDG
 
+
+
+
 run_iteration() {
     local iteration="$1"
     local counter=0
@@ -84,12 +87,17 @@ run_iteration() {
       --quiet \
       </dev/null || true
 
+    sleep 1
+
     log "Iteration $iteration: Starting query 9"
     echo "TASK 9 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 9 (iteration $iteration)" >> logs/dgraph.log
     podman exec dgraph-client /usr/local/bin/client \
         --query=9 \
+      --quiet \
         </dev/null || true
+
+    sleep 1
 
     log "Iteration $iteration: Starting query 17"
     echo "TASK 17 (iteration $iteration)" >> logs/dgraph-client.log
@@ -108,6 +116,8 @@ run_iteration() {
         --vars "{\"uri\":\"$id\"}" \
         --quiet \
         </dev/null || true
+
+    sleep 1
 
     log "Iteration $iteration: Finished benchmark loop; processed $counter rows"
 }

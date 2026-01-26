@@ -59,7 +59,10 @@ func main() {
 		}
 		targetNodeId := nodes[0].Uid
 
-		FindDistantSynonyms(runner, targetNodeId, 3, 3)
+		n := FindDistantSynonyms(runner, targetNodeId, 3, 3)
+		if !*quietArg {
+			fmt.Println("Found nodes", len(n))
+		}
 		return
 	}
 
