@@ -71,8 +71,7 @@ run_iteration() {
     while IFS=',' read -r id label; do
       counter=$((counter + 1))
       log "Iteration $iteration: #$counter Starting query 1 for id='$id' label='$label'"
-      podman exec dgraph-client /usr/local/bin/client \
-        --query=1 \
+      podman exec dgraph-client /usr/local/bin/client 1 \
         --vars "{\"uri\":\"$id\"}" \
         --quiet \
         </dev/null || true
@@ -82,8 +81,7 @@ run_iteration() {
     log "Iteration $iteration: Starting query 10"
     echo "TASK 10 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 10 (iteration $iteration)" >> logs/dgraph.log
-    podman exec dgraph-client /usr/local/bin/client \
-      --query=10 \
+    podman exec dgraph-client /usr/local/bin/client 10 \
       --quiet \
       </dev/null || true
 
@@ -92,8 +90,7 @@ run_iteration() {
     log "Iteration $iteration: Starting query 9"
     echo "TASK 9 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 9 (iteration $iteration)" >> logs/dgraph.log
-    podman exec dgraph-client /usr/local/bin/client \
-        --query=9 \
+    podman exec dgraph-client /usr/local/bin/client 9 \
       --quiet \
         </dev/null || true
 
@@ -102,8 +99,7 @@ run_iteration() {
     log "Iteration $iteration: Starting query 17"
     echo "TASK 17 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 17 (iteration $iteration)" >> logs/dgraph.log
-    podman exec dgraph-client /usr/local/bin/client \
-        --query=17 \
+    podman exec dgraph-client /usr/local/bin/client 17 \
         --vars "{\"uri\":\"/c/en/slang\"}" \
         --quiet \
         </dev/null || true
@@ -111,8 +107,7 @@ run_iteration() {
     log "Iteration $iteration: Starting query 12"
     echo "TASK 12 (iteration $iteration)" >> logs/dgraph-client.log
     echo "TASK 12 (iteration $iteration)" >> logs/dgraph.log
-    podman exec dgraph-client /usr/local/bin/client \
-        --query=12 \
+    podman exec dgraph-client /usr/local/bin/client 12 \
         --vars "{\"uri\":\"$id\"}" \
         --quiet \
         </dev/null || true
